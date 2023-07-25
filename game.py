@@ -48,7 +48,6 @@ class Player(pg.sprite.Sprite):
         if self.aniTimer>=0:
             self.aniTimer-=1
         self.aniiTimer-=1
-        #print(self.animation,self.nextAni,self.counter,self.aniFrame,self.aniTimer,self.yv)
 
 
         #Tumble Landing
@@ -304,7 +303,6 @@ class Player(pg.sprite.Sprite):
 
     #Run Every Frame
     def update(self,keys):
-        #self.animation='none'
         self.counter+=60/targetFps
         self.dt+=240/targetFps
 
@@ -803,8 +801,6 @@ while running:
 
     #Draw Hearts
     c=0
-    #for i in range(0,20+len(health)*68):
-        #pg.draw.line(HUD,(70,70,70),(20+i,HEI-80-(i*0.075)),(20+i,HEI-10-(i*0.075)),2)
     for heart in health:
         img = pg.image.load(os.path.join(path,"Images","Hearts",heart.fileExt + str(heart.amt) + ".png"))
         img = pg.transform.scale_by(img,4)
@@ -817,13 +813,13 @@ while running:
     #HUD
 
     #Draw guiding lines
-    pg.draw.aaline(HUD,(90,90,90),(0,HEI),(WID/2,HEI-48))
-    pg.draw.aaline(HUD,(90,90,90),(WID,HEI),(WID/2,HEI-48))
+    pg.draw.aaline(HUD,(60,60,60),(0,HEI),(WID/2,HEI-48))
+    pg.draw.aaline(HUD,(60,60,60),(WID,HEI),(WID/2,HEI-48))
 
     #Energy Bar
     for j in range(0,10):
         for i in range(0,20):
-            pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>pl.energy else (40,220,40), (WID-50-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-50-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
+            pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>pl.energy else (40,220,40), (WID-50-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==1 or i==18 else 2 if i==0 or i==19 else 0)),(WID-50-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==1 or i==18 else 2 if i==0 or i==19 else 0)))
     
     #Disclaimer
     tsurface = smallfont.render("Pre-Alpha. This footage does not neccesarily represent the final game.",True,(230,230,230))
@@ -840,7 +836,7 @@ while running:
         avgFps = sum(fList)/len(fList)
         tsurface = smallfont.render(str(round(avgFps,2)) + " fps",True,(230,230,230))
         HUD.blit(tsurface,(10,80))
-    threeDee=True
+    threeDee=False
     #Rendering 3D Hud
     if threeDee:
         if counter%1==0:
