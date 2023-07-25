@@ -1,0 +1,3 @@
+Aria
+Hello?|. This is a test of the phone system!|nThis should be on a new line!
+You should have to click to see this!|nThis|. text|. should|. go|. slowly!

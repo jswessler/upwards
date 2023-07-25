@@ -7,6 +7,8 @@ import random
 import os
 import cv2
 
+import heart
+
 #import heartrate
 #heartrate.trace(browser=True)
 
@@ -581,49 +583,6 @@ class Sensor(pg.sprite.Sprite):
                 pg.draw.circle(screen,(0,40,255),(self.orig.xpos+x-camerax,self.orig.ypos+y-cameray),4)
         return ret,block
 
-class Heart(pg.sprite.Sprite):
-    def __init__(self,typ,amt):
-        self.type = typ
-        self.amt = amt
-        if typ==1:
-            self.fileExt = 'red'
-            self.maxHp = 4
-        elif typ==2:
-            self.fileExt = 'blue'
-            self.maxHp = 4
-        elif typ==3:
-            self.fileExt = 'silver'
-            self.maxHp = 2
-        elif typ==4:
-            self.fileExt = 'blood'
-            self.maxHp = 1
-    def takeDmg(self,amt):
-        #return how much dmg was absorbed
-        if amt>self.amt:
-            temp = self.amt
-            amt-=self.amt
-            self.amt=0
-            return temp
-        else:
-            self.amt-=amt
-            return amt
-    def heal(self,amt):
-        if self.type==1:
-            if self.amt==self.maxHp:
-                return 0
-            elif amt+self.amt>self.maxHp:
-                amt-=self.maxHp-self.amt
-                self.amt=self.maxHp
-                return amt
-            else:
-                self.amt+=amt
-                return amt
-        else:
-            return 0
-
-
-        
-
 
 
 width = 0
@@ -691,8 +650,10 @@ def moveCamera(mousex,mousey,rxy=0): #Camera moving algorithm
 
 
 def playerCollisionDetection(type,block):
-    global level,levelSub
-    if type==4: #Dash Crystal
+    global level,levelSub,nextCall,triggerPhone
+
+    #Dash Crystal
+    if type==4:
         pl.abilities[2] = 4
         pl.abilities[3] = 2
         pl.abilities[4] = 2
@@ -700,9 +661,16 @@ def playerCollisionDetection(type,block):
         level[block]=6
         levelSub[block]=180
         heal(1)
+
+    #Blue Heart
     if type==7:
-        health.insert(2,Heart(2,4))
+        health.insert(2,heart.Heart(2,4))
         level[block]=0
+    
+    #Phone Call Trigger
+    if type==8:
+        nextCall = levelSub[block]/1000
+        triggerPhone = True
 
 
 def tileProperties(mod): #Changes tile properties such as dash crystal cooldown
@@ -749,14 +717,23 @@ se = Sensor(pl)
 loadARL(loadFrom)
 camerax = 0
 cameray = 0
+triggerPhone = False
+phoneCounter = 0
+nextCall = 0
+waitCounter = 2
+phoneX = 0
+phoneY = 0
+boxWidth = 0
 
-health = [Heart(1,4),Heart(1,4)]
+health = [heart.Heart(1,4),heart.Heart(1,4)]
 
 counter = 0
 
 while running:
     mousex,mousey = pg.mouse.get_pos()
-    HUD = pg.Surface((WID,HEI))
+    HUD = pg.Surface((WID,HEI),pg.SRCALPHA)
+    boxLayer = pg.Surface((WID,HEI),pg.SRCALPHA)
+    text = pg.Surface((WID,HEI),pg.SRCALPHA)
     WID,HEI = pg.display.get_surface().get_size()
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -769,10 +746,95 @@ while running:
     if state=='game':
         pl.update(ke)
         tileProperties(counter%180)
+    elif state=='phonecall' and boxWidth>width and currentText!='':
+        tsurface = smallfont.render(str(currentText),True,(230,230,230))
+        text.blit(tsurface,(70,HEI-270))
 
     
     moveCamera(mousex,mousey,max(0,(pl.yv-2.5)))
 
+    #Handle Phone Calls
+    if nextCall>=1:
+        r = pg.Rect(WID/2-boxWidth,HEI-300,boxWidth*2,270)
+        pg.draw.rect(boxLayer,(0,0,0),r)
+        pg.draw.rect(boxLayer,(230,230,230),r,5)
+        state = 'phonecall'
+        if boxWidth<WID-700:
+            boxWidth+=32
+            lineCounter = 0
+            currentText = ''
+            charCounter = 0
+            txt = []
+        else:
+            if txt==[]:
+                f = open(os.path.join(path,"Phone Calls", str(int(nextCall)) + ".txt"),'r')
+                lines = f.readlines()
+            
+            #Splitting into text boxes
+                for line in lines:
+                    lineWorking = []
+                    lineWorking = line.split('|n')
+                    for i in lineWorking:
+                        try:
+                            a = i.index('\n')
+                            txt.append(i[0:a] + "|t")
+                        except:
+                            txt.append(i)
+            
+            #Displaying Text (enter to advance)
+            textName = ''
+            if waitCounter<0:
+                waitCounter=1
+                if lineCounter<len(txt):
+                    i=txt[lineCounter]
+                    if lineCounter==0:
+                        textName = i[0:-2]
+                        lineCounter = 1
+                    else:
+                        if charCounter>=len(i):
+                            lineCounter+=1
+                        else:
+                            print(i)
+                            print(i[charCounter])
+                            if i[charCounter]!='|':
+                                currentText+=i[charCounter]
+                                charCounter+=1
+                                print(currentText)
+                                print('\n')
+
+                            else:
+                                j = i[charCounter+1]
+                                if j=='.':
+                                    waitCounter=10
+                                    charCounter+=2
+                                elif j==',':
+                                    waitCounter=20
+                                    charCounter+=2
+                                elif j=='|':
+                                    waitCounter = 60
+                                    charCounter+=2
+                                elif j=='n':
+                                    charCounter+=2
+                                    pass#newlines
+                                elif j=='t':
+                                    pass#new text box (wait for input)
+                        
+            else:
+                waitCounter-=1
+
+
+                
+
+
+            
+
+
+
+            if False:
+                nextCall=0
+                boxWidth = 0
+                state = 'game'
+        
 
     #Draw Player
     if pl.img!='':
@@ -798,14 +860,42 @@ while running:
                 img = pg.transform.scale_by(img,2)
                 screen.blit(img,((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
 
+    #Draw Phone
+    if triggerPhone:
+        phoneCounter+=1
+        img = pg.image.load(os.path.join(path,"Images","Phone","phone" + str(1+int((counter%6)/2)) + ".png"))
+        img = pg.transform.scale_by(img,max(2,4-phoneCounter/10))
+        phoneX+= (pl.xpos-camerax-phoneX-13)*0.2*(60/targetFps)+random.uniform(-2,2)
+        phoneY+= (pl.ypos-cameray-phoneY-170)*0.2*(60/targetFps)+random.uniform(-2,2)
+        phoneRect = pg.Rect(phoneX,phoneY,30,50)
+        if phoneCounter>360:
+            triggerPhone = False
+        if phoneRect.collidepoint(pg.mouse.get_pos()) and pg.mouse.get_pressed()[0]:
+            pg.draw.rect(screen, (230,20,20), phoneRect)
+            triggerPhone=False
+            nextCall*=1000
 
-    #Draw Hearts
+        screen.blit(img,(phoneX,phoneY))
+    else:
+        phoneCounter=0
+        img = pg.image.load(os.path.join(path,"Images","Phone","normal1.png"))
+        img = pg.transform.scale_by(img,4)
+        HUD.blit(img,(WID-80,15))
+
+
+
+    #Draw Hearts & Hex
+    img = pg.image.load(os.path.join(path,"Images","UI","hex2x.png"))
+    img = pg.transform.scale_by(img,0.5)
+
+    HUD.blit(img,(10,HEI-160))
+
     c=0
-    for heart in health:
-        img = pg.image.load(os.path.join(path,"Images","Hearts",heart.fileExt + str(heart.amt) + ".png"))
+    for hp in health:
+        img = pg.image.load(os.path.join(path,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png"))
         img = pg.transform.scale_by(img,4)
         img = pg.transform.rotate(img,4.289)
-        HUD.blit(img,(30+(68*c),HEI-80-(c*5.1)))
+        HUD.blit(img,(150+(68*c),HEI-80-(c*5.1)))
         c+=1
 
 
@@ -813,13 +903,13 @@ while running:
     #HUD
 
     #Draw guiding lines
-    pg.draw.aaline(HUD,(60,60,60),(0,HEI),(WID/2,HEI-48))
-    pg.draw.aaline(HUD,(60,60,60),(WID,HEI),(WID/2,HEI-48))
+    pg.draw.aaline(HUD,(90,90,90),(0,HEI),(WID/2,HEI-48))
+    pg.draw.aaline(HUD,(90,90,90),(WID,HEI),(WID/2,HEI-48))
 
     #Energy Bar
     for j in range(0,10):
         for i in range(0,20):
-            pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>pl.energy else (40,220,40), (WID-50-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==1 or i==18 else 2 if i==0 or i==19 else 0)),(WID-50-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==1 or i==18 else 2 if i==0 or i==19 else 0)))
+            pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>pl.energy else (40,220,40), (WID-50-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-50-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
     
     #Disclaimer
     tsurface = smallfont.render("Pre-Alpha. This footage does not neccesarily represent the final game.",True,(230,230,230))
@@ -849,9 +939,11 @@ while running:
             out_rgb = cv2.warpPerspective(buf_rgb, mat, (HEI,WID), flags=cv2.INTER_LINEAR)
             out = pg.Surface(out_rgb.shape[0:2], pg.SRCALPHA)
             pg.surfarray.blit_array(out, out_rgb)
-        screen.blit(out,(0,max(0,-pl.yv*6)),None,1)
+        screen.blit(out,(0,max(0,-pl.yv*6)))
     else:
-        screen.blit(HUD,((0,max(0,-pl.yv*4))),None,1)
+        screen.blit(HUD,((-diffcx*4,max(0,-pl.yv*6))))
+    screen.blit(boxLayer,(0,0))
+    screen.blit(text,(0,0))
 
 
     #End time, processing FPS
