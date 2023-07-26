@@ -374,10 +374,10 @@ class Player(pg.sprite.Sprite):
             
             #Right & Left Detection
             self.onWall=0
-            if any(se.detect(self.col[2],i,True)[0]==1 for i in range(-80,20,30)): #Right
+            if any(se.detect(self.col[2],i,True)[0]==1 for i in range(-90,20,10)): #Right
                 self.onWall = 1
                 self.xv = 0
-            if any(se.detect(self.col[3],i,True)[0]==1 for i in range(-80,20,30)): #Left
+            if any(se.detect(self.col[3],i,True)[0]==1 for i in range(-90,20,10)): #Left
                 self.onWall = -1
                 self.xv = 0
 
@@ -406,7 +406,8 @@ class Player(pg.sprite.Sprite):
 
                 #Hover
                 if self.yv>0 and self.energy>0.25 and self.animation!='djumpdown':
-                    self.yv*=0.94
+                    self.yv-=0.0225
+                    self.yv*=0.985
                     self.jCounter=1
                     self.energy-=(0.0725+(0.02*abs(self.xv)))
 
@@ -448,6 +449,7 @@ class Player(pg.sprite.Sprite):
                     self.abilities[1]=0
                 if self.abilities[0]<=0 and self.abilities[2]==4: #Lose your double jump
                     self.abilities[2]=3
+                    self.abilities[1]=0
                 if 0<self.abilities[2]<3:
                     self.abilities[2]=0
                 
@@ -590,6 +592,8 @@ class Sensor(pg.sprite.Sprite):
 
 width = 0
 height = 0
+startx = 0
+starty = 0
 loadFrom = 'lvl1.arl'
 def loadARL(filename): #Level loading algorithm
     global level,levelSub,width,height
@@ -869,6 +873,10 @@ while running:
                 pg.draw.rect(screen,(128,128,128),pg.Rect((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
             if bl==4:
                 pg.draw.rect(screen,(190,0,0),((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+            if bl==5:
+                pl.xpos = x
+                pl.ypos = y
+                level[i]=0
             if bl==6:
                 pg.draw.rect(screen,(0,0,40+levelSub[i]),((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
             if bl==7:
@@ -946,7 +954,7 @@ while running:
             pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>pl.energy else (240-(pl.energy*6),60+(pl.energy*6),40) if pl.energy<30 else (40,220,40), (WID-50-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-50-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
     
     #Disclaimer
-    tsurface = smallfont.render("Pre-Alpha. This footage does not neccesarily represent the final game.",True,(230,230,230))
+    tsurface = smallfont.render("7/26/23-2. This footage does not neccesarily represent the final game.",True,(230,230,230))
     HUD.blit(tsurface,(10,10))
     
     #Debug Stats
