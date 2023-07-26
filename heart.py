@@ -1,4 +1,4 @@
-
+import os
 class Heart():
     def __init__(self,typ,amt):
         self.type = typ
@@ -15,6 +15,9 @@ class Heart():
         elif typ==4:
             self.fileExt = 'blood'
             self.maxHp = 1
+        self.img = ''
+    def setImg(self,img):
+        self.img = img
     def takeDmg(self,amt):
         #return how much dmg was absorbed
         if amt>self.amt:
