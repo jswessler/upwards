@@ -6,10 +6,11 @@ from pygame import gfxdraw
 import random
 import os
 import cv2
+import time
 
 import heart
 
-#import heartrate
+import heartrate
 #heartrate.trace(browser=True)
 
 path = os.getcwd()
@@ -50,8 +51,8 @@ class Player(pg.sprite.Sprite):
     
     def animations(self):
         if self.aniTimer>=0:
-            self.aniTimer-=1
-        self.aniiTimer-=1
+            self.aniTimer-=60/targetFps
+        self.aniiTimer-=60/targetFps
 
 
         #Tumble Landing
@@ -409,7 +410,7 @@ class Player(pg.sprite.Sprite):
                     self.yv-=0.0225
                     self.yv*=0.985
                     self.jCounter=1
-                    self.energy-=(0.0725+(0.02*abs(self.xv)))
+                    self.energy-=(0.075+(0.01*abs(self.xv)))
 
                     self.animation = 'hover'
 
@@ -637,7 +638,7 @@ def loadARL(filename): #Level loading algorithm
 
 
 def moveCamera(mousex,mousey,rxy=0): #Camera moving algorithm
-    global camerax,cameray,diffcx,diffcy,cameraList
+    global camerax,cameray,diffcx,diffcy,ke
     if (3*WID/8)<mousex<(5*WID/8):
         camx = WID/2
     else:
@@ -647,13 +648,13 @@ def moveCamera(mousex,mousey,rxy=0): #Camera moving algorithm
     else:
         camy=mousey
     tx=pl.xpos+(pl.xv*128)+(pl.dFacing*128)-(WID/2)+(camx-WID/2)/3
-    ty=-(HEI/8)+pl.ypos+(min(0,pl.yv*24))-(HEI/2)+(camy-HEI/2)/3
+    ty=-(HEI/10)+pl.ypos+(min(0,pl.yv*24))-(HEI/2)+(camy-HEI/2)/3
     remcx = camerax
     remcy = cameray
-    camerax+= (tx-camerax)*0.04*(60/targetFps)+random.uniform(-rxy,rxy)
-    cameray+= (ty-cameray)*0.12*(60/targetFps)+random.uniform(-rxy,rxy)
-    diffcx = 0.75*(-math.sqrt(abs(camerax-remcx)) if camerax-remcx<0 else math.sqrt(camerax-remcx))
-    diffcy = 1*(-math.sqrt(abs(cameray-remcy)) if cameray-remcy<0 else math.sqrt(cameray-remcy))
+    camerax+= (tx-camerax)*0.0375*(60/targetFps)+random.uniform(-rxy,rxy)
+    cameray+= (ty-cameray)*0.125*(60/targetFps)+random.uniform(-rxy,rxy)+(-15 if ke[pg.K_w] else 15 if ke[pg.K_s] else 0)
+    diffcx = (-math.sqrt(abs(camerax-remcx)) if camerax-remcx<0 else math.sqrt(camerax-remcx))
+    diffcy = (-math.sqrt(abs(cameray-remcy)) if cameray-remcy<0 else math.sqrt(cameray-remcy))
 
 
 def playerCollisionDetection(type,block):
@@ -863,26 +864,26 @@ while running:
 
     #Draw Blocks
     re=0
-    for i in range(max(0,width*int(cameray/32)),min(len(level),width*int(cameray/32)+int((width/10)*HEI))):
-        re+=1
-        bl = level[i]
-        x = (i%width)*32
-        y = (int(i/width))*32
-        if bl!=0:
-            if bl==1:
-                pg.draw.rect(screen,(128,128,128),pg.Rect((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-            if bl==4:
-                pg.draw.rect(screen,(190,0,0),((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-            if bl==5:
-                pl.xpos = x
-                pl.ypos = y
-                level[i]=0
-            if bl==6:
-                pg.draw.rect(screen,(0,0,40+levelSub[i]),((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-            if bl==7:
-                img = pg.image.load(os.path.join(path,"Images","Hearts", "blue4.png"))
-                img = pg.transform.scale_by(img,2)
-                screen.blit(img,((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+    for x in range(max(0,int(camerax-32)),min(width*32,int((camerax+WID+32))),32):
+        for y in range(max(0,int(cameray-32)),min(height*32,int((cameray+HEI+32))),32):
+            re+=1
+            i = int(y/32)*width+int(x/32)
+            x-=(x%32)
+            y-=(y%32)
+            bl = level[i]
+            if bl==0:
+                pass
+            else:
+                if bl==1:
+                    pg.draw.rect(screen,(128,128,128),pg.Rect((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+                if bl==4:
+                    pg.draw.rect(screen,(190,0,0),((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+                if bl==6:
+                    pg.draw.rect(screen,(0,0,40+levelSub[i]),((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+                if bl==7:
+                    img = pg.image.load(os.path.join(path,"Images","Hearts", "blue4.png"))
+                    img = pg.transform.scale_by(img,2)
+                    screen.blit(img,((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
 
     #Draw Phone
     if triggerPhone:
@@ -968,6 +969,8 @@ while running:
         avgFps = sum(fList)/len(fList)
         tsurface = smallfont.render(str(round(avgFps,2)) + " fps",True,(230,230,230))
         HUD.blit(tsurface,(10,80))
+        tsurface = smallfont.render(str(round(1000/f,2)) + " fps",True,(230,230,230))
+        HUD.blit(tsurface,(10,95))
     targetFps=min(idealFps,avgFps)
     threeDee=False
     #Rendering 3D Hud
@@ -993,7 +996,8 @@ while running:
     fps.tick(targetFps)
     f = fps.get_rawtime()
     fList.append(1000/f)
-    if len(fList)>(targetFps*6):
+    if len(fList)>(targetFps*2):
         fList.pop(0)
     pg.display.flip()
+    #time.sleep(0.1)
     counter+=1
