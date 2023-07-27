@@ -954,7 +954,7 @@ while running:
             pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>pl.energy else (240-(pl.energy*6),60+(pl.energy*6),40) if pl.energy<30 else (40,220,40), (WID-50-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-50-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
     
     #Disclaimer
-    tsurface = smallfont.render("7/26/23-2. This footage does not neccesarily represent the final game.",True,(230,230,230))
+    tsurface = smallfont.render("7/27/23-1. This footage does not neccesarily represent the final game.",True,(230,230,230))
     HUD.blit(tsurface,(10,10))
     
     #Debug Stats
