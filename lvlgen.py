@@ -56,8 +56,11 @@ def saveARL(ls,ls2,destionation):
         f.write(bytes([byte]))
     f.close()
 
+
+loadedTiles = ['']*65536
 def loadARL(filename):
-    global level,levelSub
+    global level,levelSub,loadedTiles
+    loadedTiles = ['']*65536
     f = open(os.path.join(path,"Levels",str(filename)),'rb')
     bites = f.read()
     f.close()
@@ -95,6 +98,19 @@ def loadARL(filename):
         cou+=1
     level = lv
     levelSub = lv2
+    bCounter = 0
+    blocks = []
+    loadedTiles = ['']*65536
+    for bl in level:
+        if bl!=0:
+            blocks.append((bl*256)+levelSub[bCounter])
+        bCounter+=1
+    setBlock = set(blocks)
+    for i in setBlock:
+        try:
+            loadedTiles[i] = pg.image.load(os.path.join(path,"Images", "Tiles", str(int(i/256)) + "-" + str(int(i%256)) + ".png"))
+        except:
+            pass
 
         
 
@@ -127,6 +143,8 @@ saveTo = 'lvl1.arl'
 
 level = [0] * (lvlWid*lvlHei)
 levelSub = [0] * (lvlWid*lvlHei)
+
+
 
 while running:
     mx,my = pg.mouse.get_pos()
@@ -171,7 +189,10 @@ while running:
                 sy = y/32
                 sc = c
             if level[c]!=0:
-                pg.draw.rect(screen,(64,64,64),pg.Rect(x-camerax,y-cameray,32,32))
+                try:
+                    screen.blit(loadedTiles[level[c]*256+levelSub[c]],(x-camerax,y-cameray))
+                except:
+                    pg.draw.rect(screen,(64,64,64),pg.Rect(x-camerax,y-cameray,32,32))
             tsurface = font.render(str(level[c]),True,(180,180,180))
             screen.blit(tsurface,(x-camerax+1,y-cameray+0))
             tsurface = font.render(str(levelSub[c]),True,(180,180,180))

@@ -13,10 +13,9 @@ import heart
 import heartrate
 #heartrate.trace(browser=True)
 
-path = os.getcwd()
-idealFps = 60
-targetFps = 60
-avgFps = 60
+path = os.getcwd() #Path to game directory
+idealFps = 60 #Target FPS for the game to aim for
+buildIdentifier = "7/28/23-1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self):
@@ -25,9 +24,7 @@ class Player(pg.sprite.Sprite):
         self.xv = 0
         self.yv = 0
         self.energy = 100
-        self.timer = 0
         self.facing = 0
-        self.ju = False
         self.gravity = 1
         self.jCounter = 0
         self.abilities = [4,15,0,2,2] #Jump, Extended Jump, Double Jump, Dive, Jump Dive
@@ -40,7 +37,6 @@ class Player(pg.sprite.Sprite):
         self.animation = 'falling'
         self.nextAni = 'none'
         self.aniFrame=1
-        self.airMod=1
         self.aniTimer = 0
         self.aniiTimer = 0
         self.dt = 0
@@ -96,7 +92,7 @@ class Player(pg.sprite.Sprite):
         elif self.onGround:
             
             #Run
-            if self.animation=='run' or abs(self.xv)>0.25:
+            if self.animation=='run' or abs(self.xv)>0.4:
                 if self.aniTimer<0:
                     self.aniFrame+=1
                     if self.aniFrame==18:
@@ -128,7 +124,7 @@ class Player(pg.sprite.Sprite):
         #Air Animations
 
         else:
-                #Hover
+        #Hover
             if self.animation=='hover':
                 self.nextAni='low'
                 self.animation='none'
@@ -137,13 +133,13 @@ class Player(pg.sprite.Sprite):
                     self.aniTimer=6
                 if self.aniFrame>6:
                     self.aniFrame=1
-                if self.energy>25:
+                if self.energy>30:
                     if abs(self.xv)<0.5:
                         self.img = pg.image.load(os.path.join(path,"Images","Aria","hovern" + str(self.aniFrame) + ".png"))
                     else:
                         self.img = pg.image.load(os.path.join(path,"Images","Aria","hoverr" + str(self.aniFrame) + ".png"))
                 else:
-                    if abs(self.xv)<0.5:
+                    if abs(self.xv)<1:
                         self.img = pg.image.load(os.path.join(path,"Images","Aria","hovernl" + str(self.aniFrame) + ".png"))
                     else:
                         self.img = pg.image.load(os.path.join(path,"Images","Aria","hoverrl" + str(self.aniFrame) + ".png"))
@@ -313,8 +309,8 @@ class Player(pg.sprite.Sprite):
 
         for i in range(-96,16,32):
             for j in range(-12,12,12):
-                det,bl = se.detect(j,i,True)
-                playerCollisionDetection(det,bl)
+                det,bl,st = se.detect(j,i,True)
+                playerCollisionDetection(det,bl,st)
 
         #For complicated reasons physics targets 240fps.
         #If we're running below 240fps then we do multiple physics steps per frame
@@ -357,7 +353,7 @@ class Player(pg.sprite.Sprite):
                 self.abilities[2] = 4
                 self.abilities[3] = 2
                 self.abilities[4] = 2
-                eRegen = 0.1875
+                eRegen = 0.175
                 for heart in health:
                     if heart.type==3:
                         eRegen*=1.25
@@ -399,7 +395,7 @@ class Player(pg.sprite.Sprite):
 
 
                 #Jump Extension
-                if not self.onGround and self.abilities[0]<=0 and self.abilities[1]>0 and self.energy>0.25:
+                if not self.onGround and self.abilities[0]<=0 and self.abilities[1]>0 and self.energy>0.175:
                     self.yv-=0.032
                     self.energy-=0.175
                     self.abilities[1]-=0.25
@@ -432,13 +428,13 @@ class Player(pg.sprite.Sprite):
 
 
                 #Jump out of dive
-                if self.abilities[4]>0 and not self.onGround and self.abilities[0]<=0 and self.abilities[3]!=2 and self.energy>1.25:
+                if self.abilities[4]>0 and not self.onGround and self.abilities[0]<=0 and self.abilities[3]!=2 and self.energy>1:
                     self.yv*=0.925
                     self.yv-=0.45
                     self.xv*=0.95
                     self.abilities[4]-=0.25
                     self.abilities[3]=0
-                    self.energy-=1.25
+                    self.energy-=1
                     self.jCounter=4
 
                     self.animation = 'hover'
@@ -460,6 +456,7 @@ class Player(pg.sprite.Sprite):
 
                 #Slight hover at the end of jumps
                 if self.yv>-1 and self.jCounter>0:
+                    self.energy-=0.02
                     self.gravity = 0.45
 
             #Wall slide 
@@ -483,7 +480,7 @@ class Player(pg.sprite.Sprite):
 
             #Dive
             if keys[pg.K_LCTRL]:
-                if self.abilities[3]==2 and self.abilities[0]<=0 and self.energy>12:
+                if self.abilities[3]==2 and self.abilities[0]<=0 and self.energy>10:
                     if self.xv>=0:
                         self.xv = 4.125
                     else:
@@ -491,7 +488,7 @@ class Player(pg.sprite.Sprite):
                     self.yv-=1.5
                     self.abilities[2]=0
                     self.abilities[3]=1
-                    self.energy-=12
+                    self.energy-=10
 
                     self.animation = 'jump'
 
@@ -540,10 +537,10 @@ class Player(pg.sprite.Sprite):
 
             #Stop if you're going very slow & change animation
             self.yv+=self.gravity*0.03025
-            if abs(self.xv)<0.25 and self.onGround and self.animation!='landed' and self.animation!='hardlanded':
+            if abs(self.xv)<0.4 and self.onGround and self.animation!='landed' and self.animation!='hardlanded':
                 self.animation='none'
                 self.saveAni='none'
-            if abs(self.xv)<0.025 and self.onGround:
+            if abs(self.xv)<0.1 and self.onGround:
                 self.xv*=self.xv
             if self.onWall==-1:
                 self.xv = max(0,self.xv)
@@ -561,9 +558,7 @@ class Player(pg.sprite.Sprite):
                 self.dFacing = self.facing
             
             #Caps on vertical speed
-            if self.yv<-3.75:
-                self.yv*=0.925
-            if self.yv>9:
+            if not -3.5<self.yv<8.5:
                 self.yv*=0.96
             
             #Updating x & y pos
@@ -582,12 +577,13 @@ class Sensor(pg.sprite.Sprite):
         yp = self.orig.ypos+y+self.orig.yv
         block = (int(yp/32)*width)+int(xp/32)
         ret = level[block]
+        subtype = levelSub[block]
         if show and ke[pg.K_r]:
             if ret!=0:
                 pg.draw.circle(screen,(0,255,80),(self.orig.xpos+x-camerax,self.orig.ypos+y-cameray),4)
             else:
                 pg.draw.circle(screen,(0,40,255),(self.orig.xpos+x-camerax,self.orig.ypos+y-cameray),4)
-        return ret,block
+        return ret,block,subtype
 
 
 
@@ -639,49 +635,67 @@ def loadARL(filename): #Level loading algorithm
 
 def moveCamera(mousex,mousey,rxy=0): #Camera moving algorithm
     global camerax,cameray,diffcx,diffcy,ke
-    if (3*WID/8)<mousex<(5*WID/8):
+    if (4*WID/10)<mousex<(6*WID/10):
         camx = WID/2
+        if (4*HEI/10)<mousey<(6*HEI/10):
+            pg.draw.rect(screen,(60,60,60),pg.Rect(4*WID/10,4*HEI/10,WID/5,HEI/5),3)
     else:
-        camx=mousex
-    if (3*HEI/8)<mousey<(5*HEI/8):
+        camx = mousex
+    if (4*HEI/10)<mousey<(6*HEI/10):
         camy = HEI/2
     else:
-        camy=mousey
-    tx=pl.xpos+(pl.xv*128)+(pl.dFacing*128)-(WID/2)+(camx-WID/2)/3
-    ty=-(HEI/10)+pl.ypos+(min(0,pl.yv*24))-(HEI/2)+(camy-HEI/2)/3
+        camy = mousey
+    tx = pl.xpos+(pl.xv*128)+(pl.dFacing*128)-(WID/2)+(camx-WID/2)/3
+    ty = -(HEI/10)+pl.ypos+(min(0,pl.yv*24))-(HEI/2)+(camy-HEI/2)/3
     remcx = camerax
     remcy = cameray
-    camerax+= (tx-camerax)*0.0375*(60/targetFps)+random.uniform(-rxy,rxy)
-    cameray+= (ty-cameray)*0.125*(60/targetFps)+random.uniform(-rxy,rxy)+(-15 if ke[pg.K_w] else 15 if ke[pg.K_s] else 0)
+    camerax += (tx-camerax)*0.0575*(60/targetFps)+random.uniform(-rxy,rxy)
+    cameray += (ty-cameray)*0.125*(60/targetFps)+random.uniform(-rxy,rxy)+(-15 if ke[pg.K_w] else 15 if ke[pg.K_s] else 0)
     diffcx = (-math.sqrt(abs(camerax-remcx)) if camerax-remcx<0 else math.sqrt(camerax-remcx))
     diffcy = (-math.sqrt(abs(cameray-remcy)) if cameray-remcy<0 else math.sqrt(cameray-remcy))
 
-
-def playerCollisionDetection(type,block):
-    global level,levelSub,nextCall,triggerPhone
+#Defines collision detection between player and interactable objects
+def playerCollisionDetection(type,block,subtype):
+    global level,levelSub,nextCall,triggerPhone,redrawHearts
 
     #Dash Crystal
-    if type==4:
+    if type == 4:
         pl.abilities[2] = 4
         pl.abilities[3] = 2
         pl.abilities[4] = 2
-        pl.energy=100
-        level[block]=6
-        levelSub[block]=180
+        pl.energy = 100
+        level[block] = 6
+        levelSub[block] = 180
         heal(1)
 
     #Blue Heart
-    if type==7:
+    elif type == 7:
         health.insert(2,heart.Heart(2,4))
-        level[block]=0
+        level[block] = 0
+        redrawHearts = True
     
+    #Silver Heart
+    elif type == 8:
+        health.insert(2,heart.Heart(3,subtype))
+        level[block] = 0
+        redrawHearts = True
+    #Red Heart
+    elif type == 9:
+        heal(1)
+        level[block] = 0
+        redrawHearts = True
+    #Blood Heart
+    elif type == 10:
+        health.insert(2,heart.Heart(4,1))
+        level[block] = 0
+        redrawHearts = True
     #Phone Call Trigger
-    if type==8:
+    elif type == 11:
         nextCall = levelSub[block]/1000
         triggerPhone = True
 
-
-def tileProperties(mod): #Changes tile properties such as dash crystal cooldown
+#Changes tile properties such as dash crystal cooldown
+def tileProperties(mod): 
     counter = int(mod*(len(level)/180))
     while counter<int((mod+1)*(len(level)/180)):
         block = level[counter]
@@ -690,10 +704,10 @@ def tileProperties(mod): #Changes tile properties such as dash crystal cooldown
                 levelSub[counter]-=90
             else:
                 level[counter]=4
-                levelSub[counter]=180
+                levelSub[counter]=0
         counter+=1
 
-
+#Deals damage to hearts in order
 def dealDmg(amt):
     global redrawHearts
     for heart in reversed(health):
@@ -704,34 +718,32 @@ def dealDmg(amt):
             health.pop(health.index(heart))
     redrawHearts=True
 
-
+#Heals red & silver hearts
 def heal(amt):
     global redrawHearts
     for heart in health:
         amt-=heart.heal(amt)
     redrawHearts=True
         
-
+#Main Init
 pg.init()
 WID = 1280
 HEI = 800
-gameScale = 1.00
-screen = pg.display.set_mode((WID,HEI),pg.RESIZABLE)
+gameScale = 1.0
+screen = pg.display.set_mode((WID,HEI),pg.DOUBLEBUF,vsync=True)
 running = True
 state = 'game'
 f=1
-fList = [1]
+fList = [idealFps]
 fps = pg.time.Clock()
 textfont = pg.font.SysFont('Times New Roman',36)
-smallfont = pg.font.SysFont('Times New Roman',12)
+smallfont = pg.font.SysFont('Times New Roman',14)
 pl = Player()
 se = Sensor(pl)
 loadARL(loadFrom)
 
-
 camerax = 0
 cameray = 0
-
 
 triggerPhone = False
 phoneCounter = 0
@@ -744,13 +756,29 @@ currentText = []
 redrawHearts=True
 resumeTimer = 0
 
-
 boxWidth = 0
-
+targetFps = 60
+avgFps = 60
 health = [heart.Heart(1,4),heart.Heart(1,4)]
 
 counter = 0
+bCounter = 0
+blocks = []
+loadedTiles = ['']*65536
+for bl in level:
+    if bl!=0:
+        blocks.append((bl*256)+levelSub[bCounter])
+    bCounter+=1
+setBlock = set(blocks)
+for i in setBlock:
+    try:
+        loadedTiles[i] = pg.image.load(os.path.join(path,"Images", "Tiles", str(int(i/256)) + "-" + str(int(i%256)) + ".png"))
+    except:
+        pass
 
+
+
+#Main Game Loop
 while running:
     mousex,mousey = pg.mouse.get_pos()
     HUD = pg.Surface((WID,HEI),pg.SRCALPHA)
@@ -871,34 +899,32 @@ while running:
             x-=(x%32)
             y-=(y%32)
             bl = level[i]
-            if bl==0:
+            blSub = levelSub[i]
+            if bl==0 or bl==6 or bl==11 or bl==5:
                 pass
             else:
-                if bl==1:
-                    pg.draw.rect(screen,(128,128,128),pg.Rect((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-                if bl==4:
-                    pg.draw.rect(screen,(190,0,0),((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-                if bl==6:
-                    pg.draw.rect(screen,(0,0,40+levelSub[i]),((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-                if bl==7:
-                    img = pg.image.load(os.path.join(path,"Images","Hearts", "blue4.png"))
-                    img = pg.transform.scale_by(img,2)
-                    screen.blit(img,((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-
+                try:
+                    if bl==7 or bl==8 or bl==9 or bl==10:
+                        screen.blit(pg.transform.scale_by(loadedTiles[bl*256+blSub],2), ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+                    else:
+                        screen.blit(loadedTiles[bl*256+blSub], ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+                except:
+                    raise Exception
+                    
     #Draw Phone
     if triggerPhone:
         phoneCounter+=1
         if counter%2==0:
             phoneImg = pg.image.load(os.path.join(path,"Images","Phone","phone" + str(1+int((counter%6)/2)) + ".png"))
             phoneImg = pg.transform.scale_by(phoneImg,max(2,min(4,7-phoneCounter/10)))
-        if phoneCounter>380:
+        if phoneCounter>380*(idealFps/60):
             triggerPhone=False
-        elif phoneCounter>360:
-            phoneX+= (WID-20-phoneX)*0.125*(60/targetFps)
-            phoneY+= (30-phoneY)*0.125*(60/targetFps)
-        elif phoneCounter>30:
-            phoneX+= (pl.xpos-camerax-phoneX-13)*0.2*(60/targetFps)+random.uniform(-2,2)
-            phoneY+= (pl.ypos-cameray-phoneY-170)*0.2*(60/targetFps)+random.uniform(-2,2)
+        elif phoneCounter>360*(idealFps/60):
+            phoneX += (WID-20-phoneX)*0.125*(60/targetFps)
+            phoneY += (30-phoneY)*0.125*(60/targetFps)
+        elif phoneCounter>30*(idealFps/60):
+            phoneX += (pl.xpos-camerax-phoneX-13)*0.2*(60/targetFps)+random.uniform(-2,2)
+            phoneY += (pl.ypos-cameray-phoneY-170)*0.2*(60/targetFps)+random.uniform(-2,2)
         else:
             phoneX=WID-80
             phoneY=15
@@ -938,12 +964,15 @@ while running:
     c=0
     for hp in health:
         if redrawHearts:
-            hp.setImg(os.path.join(path,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png"))
-        heartImg = pg.image.load(hp.img)
-        heartImg = pg.transform.scale_by(heartImg,4)
-        heartImg = pg.transform.rotate(heartImg,4.289)
-        HUD.blit(heartImg,(150+(68*c),HEI-80-(c*5.1)))
+            hp.setImg(pg.image.load(os.path.join(path,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png")))
+            hp.img = pg.transform.scale_by(hp.img,4)
+            hp.img = pg.transform.rotate(hp.img,4.289)
+        try:
+            HUD.blit(hp.img,(150+(68*c),HEI-80-(c*5.1)))
+        except:
+            pass
         c+=1
+    redrawHearts=False
 
 
     
@@ -952,10 +981,10 @@ while running:
     #Energy Bar
     for j in range(0,10):
         for i in range(0,20):
-            pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>pl.energy else (240-(pl.energy*6),60+(pl.energy*6),40) if pl.energy<30 else (40,220,40), (WID-50-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-50-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
+            pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (240-(pl.energy*6),60+(pl.energy*6),40) if pl.energy<30 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
     
     #Disclaimer
-    tsurface = smallfont.render("7/27/23-1. This footage does not neccesarily represent the final game.",True,(230,230,230))
+    tsurface = smallfont.render(str(buildIdentifier) + "This footage does not neccesarily represent the final game.",True,(230,230,230))
     HUD.blit(tsurface,(10,10))
     
     #Debug Stats

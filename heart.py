@@ -29,7 +29,7 @@ class Heart():
             self.amt-=amt
             return amt
     def heal(self,amt):
-        if self.type==1:
+        if self.type==1 or self.type==3:
             if self.amt==self.maxHp:
                 return 0
             elif amt+self.amt>self.maxHp:
