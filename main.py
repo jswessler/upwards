@@ -15,7 +15,7 @@ import heartrate
 
 path = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildIdentifier = "7/28/23-1" #Build Identifier
+buildIdentifier = "7/28/23-2" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self):
@@ -321,12 +321,20 @@ class Player(pg.sprite.Sprite):
 
             if self.jCounter>0:
                 self.jCounter-=0.25
+            
+            eRegen = 0.175
+            for heart in health:
+                if heart.type==3:
+                    eRegen*=1.25
+                    self.energy+=0.025
+
 
 
             #Object Collision Detection
 
             #Ground Collision
             if any(se.detect(i,self.col[0],True)[0]==1 for i in range(-17,16,6)):
+            
                 if self.onGround==False:
                     self.ypos+=1
                     self.energy+=4
@@ -353,10 +361,6 @@ class Player(pg.sprite.Sprite):
                 self.abilities[2] = 4
                 self.abilities[3] = 2
                 self.abilities[4] = 2
-                eRegen = 0.175
-                for heart in health:
-                    if heart.type==3:
-                        eRegen*=1.25
                 self.energy+=eRegen
             else:
                 self.onGround = False
@@ -402,11 +406,11 @@ class Player(pg.sprite.Sprite):
 
 
                 #Hover
-                if self.yv>0 and self.energy>0.25 and self.animation!='djumpdown':
-                    self.yv-=0.0225
-                    self.yv*=0.985
+                if self.yv>0 and self.energy>0.1 and self.animation!='djumpdown':
+                    self.yv-=0.015
+                    self.yv*=0.97
                     self.jCounter=1
-                    self.energy-=(0.075+(0.01*abs(self.xv)))
+                    self.energy-=(0.06+(0.0125*abs(self.xv)))
 
                     self.animation = 'hover'
 
@@ -593,8 +597,8 @@ startx = 0
 starty = 0
 loadFrom = 'lvl1.arl'
 def loadARL(filename): #Level loading algorithm
-    global level,levelSub,width,height
-    f = open(os.path.join(path,"Levels",loadFrom),'rb')
+    global level,levelSub,width,height,loadedTiles
+    f = open(os.path.join(path,"Levels",filename),'rb')
     bites = f.read()
     f.close()
     counter = 0
@@ -631,6 +635,19 @@ def loadARL(filename): #Level loading algorithm
         cou+=1
     level = lv
     levelSub = lv2
+    bCounter = 0
+    blocks = []
+    loadedTiles = ['']*65536
+    for bl in level:
+        if bl!=0:
+            blocks.append((bl*256)+levelSub[bCounter])
+        bCounter+=1
+    setBlock = set(blocks)
+    for i in setBlock:
+        try:
+            loadedTiles[i] = pg.image.load(os.path.join(path,"Images", "Tiles", str(int(i/256)) + "-" + str(int(i%256)) + ".png"))
+        except:
+            pass
 
 
 def moveCamera(mousex,mousey,rxy=0): #Camera moving algorithm
@@ -657,6 +674,7 @@ def moveCamera(mousex,mousey,rxy=0): #Camera moving algorithm
 #Defines collision detection between player and interactable objects
 def playerCollisionDetection(type,block,subtype):
     global level,levelSub,nextCall,triggerPhone,redrawHearts
+    #Blocks are 1-3
 
     #Dash Crystal
     if type == 4:
@@ -664,44 +682,59 @@ def playerCollisionDetection(type,block,subtype):
         pl.abilities[3] = 2
         pl.abilities[4] = 2
         pl.energy = 100
-        level[block] = 6
-        levelSub[block] = 180
+        setLevelBlock(block,6,30)
         heal(1)
+    
+    #Maintinence
+    if type == 5:
+        if subtype == 1:
+            raise Exception("Forced Crash via 5-1 tile")
 
     #Blue Heart
     elif type == 7:
         health.insert(2,heart.Heart(2,4))
-        level[block] = 0
+        setLevelBlock(block,0,0)
         redrawHearts = True
     
     #Silver Heart
     elif type == 8:
         health.insert(2,heart.Heart(3,subtype))
-        level[block] = 0
+        setLevelBlock(block,0,0)
         redrawHearts = True
+
     #Red Heart
     elif type == 9:
-        heal(1)
-        level[block] = 0
+        heal(subtype)
+        setLevelBlock(block,0,0)
         redrawHearts = True
-    #Blood Heart
+
+    #Maintinence / Blood Heart
     elif type == 10:
-        health.insert(2,heart.Heart(4,1))
-        level[block] = 0
-        redrawHearts = True
-    #Phone Call Trigger
+        if subtype == 1:
+            health.insert(2,heart.Heart(4,1))
+            setLevelBlock(block,0,0)
+            redrawHearts = True
+
+    #Phone Call Triggers (11-)
     elif type == 11:
         nextCall = levelSub[block]/1000
         triggerPhone = True
+        setLevelBlock(block,10,0)
+
+#Sets level blocks
+def setLevelBlock(block,lvl,sLvl):
+    global level,levelSub
+    level[block]=lvl
+    levelSub[block]=sLvl
 
 #Changes tile properties such as dash crystal cooldown
 def tileProperties(mod): 
-    counter = int(mod*(len(level)/180))
-    while counter<int((mod+1)*(len(level)/180)):
+    counter = int(mod*(len(level)/60))
+    while counter<int((mod+1)*(len(level)/60)):
         block = level[counter]
         if block==6:
             if levelSub[counter]>0:
-                levelSub[counter]-=90
+                levelSub[counter]-=10
             else:
                 level[counter]=4
                 levelSub[counter]=0
@@ -762,19 +795,6 @@ avgFps = 60
 health = [heart.Heart(1,4),heart.Heart(1,4)]
 
 counter = 0
-bCounter = 0
-blocks = []
-loadedTiles = ['']*65536
-for bl in level:
-    if bl!=0:
-        blocks.append((bl*256)+levelSub[bCounter])
-    bCounter+=1
-setBlock = set(blocks)
-for i in setBlock:
-    try:
-        loadedTiles[i] = pg.image.load(os.path.join(path,"Images", "Tiles", str(int(i/256)) + "-" + str(int(i%256)) + ".png"))
-    except:
-        pass
 
 
 
@@ -795,7 +815,7 @@ while running:
     #Only if the physics are running
     if state=='game':
         pl.update(ke)
-        tileProperties(counter%180)
+        tileProperties(counter%60)
         moveCamera(mousex,mousey,max(0,(pl.yv-2.5)))
     elif state=='phonecall' and boxWidth>width:
         moveCamera(mousex,mousey)
@@ -909,7 +929,13 @@ while running:
                     else:
                         screen.blit(loadedTiles[bl*256+blSub], ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
                 except:
-                    raise Exception
+                    pass
+            if ke[pg.K_t]:
+                tsurface = smallfont.render(str(bl),True,(255,0,0) if bl!=0 else (180,180,180))
+                screen.blit(tsurface, ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+                tsurface = smallfont.render(str(blSub),True,(255,0,0) if bl!=0 else (180,180,180))
+                screen.blit(tsurface, ((x-camerax)*gameScale,(y+12-cameray)*gameScale,32*gameScale,32*gameScale))
+
                     
     #Draw Phone
     if triggerPhone:
@@ -984,7 +1010,7 @@ while running:
             pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (240-(pl.energy*6),60+(pl.energy*6),40) if pl.energy<30 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
     
     #Disclaimer
-    tsurface = smallfont.render(str(buildIdentifier) + "This footage does not neccesarily represent the final game.",True,(230,230,230))
+    tsurface = smallfont.render(str(buildIdentifier) + " - This footage does not neccesarily represent the final game.",True,(230,230,230))
     HUD.blit(tsurface,(10,10))
     
     #Debug Stats
@@ -1000,6 +1026,8 @@ while running:
         HUD.blit(tsurface,(10,80))
         tsurface = smallfont.render(str(round(1000/f,2)) + " fps",True,(230,230,230))
         HUD.blit(tsurface,(10,95))
+
+
     targetFps=min(idealFps,avgFps)
     threeDee=False
     #Rendering 3D Hud
