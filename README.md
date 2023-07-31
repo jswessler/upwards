@@ -2,10 +2,12 @@
 
 A game by jswessler
 
-7/28/23 Build 2
+7/31/23 Build 1
+- Adjusted energy regen, brought back mid-air regen
+
+7/29/23 Build 1
 * Show debug text on every block with T
 - Adjusted hover physics
-- Adjusted center box drawing
 - Moved loading tilemap into loadlevel function
 - Silver hearts fully implemented
 - Standardized & expanded collision detection

@@ -15,7 +15,7 @@ import heartrate
 
 path = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildIdentifier = "7/28/23-2" #Build Identifier
+buildIdentifier = "7/29/23-2" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self):
@@ -222,23 +222,23 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-36,-94]
+                    self.imgPos = [-30,-112]
                 
                 #Djump transition (down)
                 elif self.animation=='djumpdown':
                     if self.aniTimer<0:
                         self.aniFrame+=1
                         self.aniTimer=3
-                    if self.aniFrame>2:
+                    if self.aniFrame>3:
                         self.aniFrame=1
-                    if self.aniFrame==2:
+                    if self.aniFrame==3:
                         self.nextAni='djump'
                         self.animation='none'
                     self.img = pg.image.load(os.path.join(path,"Images","Aria","djumpdown" + str(min(2,self.aniFrame)) + ".png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-26,-116]
+                    self.imgPos = [-26,-96]
                     
 
 
@@ -322,9 +322,14 @@ class Player(pg.sprite.Sprite):
             if self.jCounter>0:
                 self.jCounter-=0.25
             
-            eRegen = 0.175
+            if self.energy < 20:
+                eRegen = (self.energy / 105)
+            elif self.energy < 75:
+                eRegen = 0.195
+            else:
+                eRegen = max(0.005,0.0075 + (100-self.energy) / 250)
             for heart in health:
-                if heart.type==3:
+                if heart.type == 3:
                     eRegen*=1.25
                     self.energy+=0.025
 
@@ -337,7 +342,7 @@ class Player(pg.sprite.Sprite):
             
                 if self.onGround==False:
                     self.ypos+=1
-                    self.energy+=4
+                    self.energy+=2
                     if 0.5<self.yv<4.5:
                         self.animation = 'landed'
                         self.aniTimer = 1+int(self.yv*2.5)
@@ -365,6 +370,7 @@ class Player(pg.sprite.Sprite):
             else:
                 self.onGround = False
                 self.gravity = 1
+                self.energy+=(eRegen/45*(max(0,self.yv)))
                     
 
                 #Up detection (only run when not on ground)
@@ -654,14 +660,18 @@ def moveCamera(mousex,mousey,rxy=0): #Camera moving algorithm
     global camerax,cameray,diffcx,diffcy,ke
     if (4*WID/10)<mousex<(6*WID/10):
         camx = WID/2
-        if (4*HEI/10)<mousey<(6*HEI/10):
-            pg.draw.rect(screen,(60,60,60),pg.Rect(4*WID/10,4*HEI/10,WID/5,HEI/5),3)
     else:
         camx = mousex
     if (4*HEI/10)<mousey<(6*HEI/10):
         camy = HEI/2
     else:
         camy = mousey
+    
+    #Draw a center box
+    if (4*HEI/10)<mousey<(6*HEI/10) and (4*WID/10)<mousex<(6*WID/10):
+        pg.draw.rect(screen,(60,60,60),pg.Rect(4*WID/10,4*HEI/10,WID/5,HEI/5),3)
+    
+    #Adjust camera parameters
     tx = pl.xpos+(pl.xv*128)+(pl.dFacing*128)-(WID/2)+(camx-WID/2)/3
     ty = -(HEI/10)+pl.ypos+(min(0,pl.yv*24))-(HEI/2)+(camy-HEI/2)/3
     remcx = camerax
@@ -1007,7 +1017,7 @@ while running:
     #Energy Bar
     for j in range(0,10):
         for i in range(0,20):
-            pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (240-(pl.energy*6),60+(pl.energy*6),40) if pl.energy<30 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
+            pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (220-(pl.energy*6),40+(pl.energy*6),40) if pl.energy<30 else (40,300-pl.energy,-400+(pl.energy*6)) if pl.energy>80 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
     
     #Disclaimer
     tsurface = smallfont.render(str(buildIdentifier) + " - This footage does not neccesarily represent the final game.",True,(230,230,230))
