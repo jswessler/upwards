@@ -342,7 +342,7 @@ class Player(pg.sprite.Sprite):
             
                 if self.onGround==False:
                     self.ypos+=1
-                    self.energy+=2
+                    self.energy+=(6*eRegen)+0.5
                     if 0.5<self.yv<4.5:
                         self.animation = 'landed'
                         self.aniTimer = 1+int(self.yv*2.5)
@@ -1000,7 +1000,10 @@ while running:
     c=0
     for hp in health:
         if redrawHearts:
-            hp.setImg(pg.image.load(os.path.join(path,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png")))
+            try:
+                hp.setImg(pg.image.load(os.path.join(path,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png")))
+            except:
+                health.pop(health.index(hp))
             hp.img = pg.transform.scale_by(hp.img,4)
             hp.img = pg.transform.rotate(hp.img,4.289)
         try:

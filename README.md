@@ -2,6 +2,9 @@
 
 A game by jswessler
 
+7/31 Build 2
+- Adjusted landing physics
+
 7/31/23 Build 1
 - Adjusted energy regen, brought back mid-air regen
 

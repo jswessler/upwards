@@ -24,6 +24,7 @@ class Heart():
     def setImg(self,img):
         self.img = img
 
+
     #Deal damage to heart. We pass in an amount of damage to take, and return how much we absorbed
     def takeDmg(self,amt):
 
