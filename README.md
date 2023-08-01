@@ -2,7 +2,12 @@
 
 A game by jswessler
 
-7/31 Build 2
+7/31/23 Build 3
+- Added maxSpd, you can now run 3.15u/f instead of 2.05u/f
+- Double jump & dive give you more horizontal speed
+- Nerfed silver hearts
+
+7/31/23 Build 2
 - Adjusted landing physics
 
 7/31/23 Build 1
@@ -14,8 +19,6 @@ A game by jswessler
 - Moved loading tilemap into loadlevel function
 - Silver hearts fully implemented
 - Standardized & expanded collision detection
-
-
 
 7/28/23 Build 1
 * New renderer, draws actual tiles instead of pg.rect

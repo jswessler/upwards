@@ -40,6 +40,7 @@ class Player(pg.sprite.Sprite):
         self.aniTimer = 0
         self.aniiTimer = 0
         self.dt = 0
+        self.maxSpd = 2.05
 
         #Collision Boxes. bottom, top, right, left
         #This list is in that order
@@ -323,15 +324,15 @@ class Player(pg.sprite.Sprite):
                 self.jCounter-=0.25
             
             if self.energy < 20:
-                eRegen = (self.energy / 105)
+                eRegen = (self.energy / 105)+0.001
             elif self.energy < 75:
-                eRegen = 0.195
+                eRegen = 0.19
             else:
                 eRegen = max(0.005,0.0075 + (100-self.energy) / 250)
             for heart in health:
                 if heart.type == 3:
-                    eRegen*=1.25
-                    self.energy+=0.025
+                    eRegen*=1.2
+                    self.energy+=0.01
 
 
 
@@ -426,6 +427,8 @@ class Player(pg.sprite.Sprite):
                     if self.yv>0:
                         self.yv*=0.25
                     self.yv-=0.325
+                    self.maxSpd = 2.6
+                    self.xv*=1.0125
                     self.abilities[2]-=0.25
                     self.energy-=0.8
                     self.jCounter=(8+(2*(7-self.abilities[2])))
@@ -499,6 +502,7 @@ class Player(pg.sprite.Sprite):
                     self.abilities[2]=0
                     self.abilities[3]=1
                     self.energy-=10
+                    self.maxSpd = 3.2
 
                     self.animation = 'jump'
 
@@ -520,14 +524,25 @@ class Player(pg.sprite.Sprite):
                     self.xv-=0.1225
                     self.facing = -1
                     self.animation='run'
-                if keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
+                    if self.maxSpd<3.15:
+                        self.maxSpd+=0.002
+                elif keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
                     self.xv+=0.1225
                     self.facing = 1
                     self.animation='run'
+                    if self.maxSpd<3.15:
+                        self.maxSpd+=0.002
+                else:
+                    if self.maxSpd>1.8:
+                        self.maxSpd-=0.04
                 self.xv*=0.96
+                if self.facing == 0 or self.facing/self.xv<0:
+                    self.maxSpd = 1.8
 
             #In the air you have a lot less traction
             else:
+                if self.maxSpd>2.2:
+                    self.maxSpd-=0.0025
                 if keys[pg.K_a] or keys[pg.K_LEFT] and self.onWall!=-1:
                     self.xv-=0.02
                     self.facing = -1
@@ -536,10 +551,11 @@ class Player(pg.sprite.Sprite):
                     self.facing = 1
                 self.xv*=0.9915
             
-            if self.xv>2.05:
-                self.xv-=0.04
-            if self.xv<-2.05:
-                self.xv+=0.04
+            if self.xv>self.maxSpd:
+                self.xv-=0.0425
+            if self.xv<-self.maxSpd:
+                self.xv+=0.0425
+            print(self.maxSpd)
             
             #Forfeit floatiness with S or down arrow
             if keys[pg.K_s] or keys[pg.K_DOWN]:
