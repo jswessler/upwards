@@ -2,6 +2,10 @@
 
 A game by jswessler
 
+8/1/23 Build 1
+- Lowered top speed
+
+
 7/31/23 Build 3
 - Added maxSpd, you can now run 3.15u/f instead of 2.05u/f
 - Double jump & dive give you more horizontal speed

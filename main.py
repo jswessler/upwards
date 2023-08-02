@@ -367,7 +367,7 @@ class Player(pg.sprite.Sprite):
                 self.abilities[2] = 4
                 self.abilities[3] = 2
                 self.abilities[4] = 2
-                self.energy+=eRegen
+                self.energy+=eRegen+0.001
             else:
                 self.onGround = False
                 self.gravity = 1
@@ -427,7 +427,7 @@ class Player(pg.sprite.Sprite):
                     if self.yv>0:
                         self.yv*=0.25
                     self.yv-=0.325
-                    self.maxSpd = 2.6
+                    self.maxSpd = 2.8
                     self.xv*=1.0125
                     self.abilities[2]-=0.25
                     self.energy-=0.8
@@ -502,7 +502,7 @@ class Player(pg.sprite.Sprite):
                     self.abilities[2]=0
                     self.abilities[3]=1
                     self.energy-=10
-                    self.maxSpd = 3.2
+                    self.maxSpd = 3.4
 
                     self.animation = 'jump'
 
@@ -524,20 +524,20 @@ class Player(pg.sprite.Sprite):
                     self.xv-=0.1225
                     self.facing = -1
                     self.animation='run'
-                    if self.maxSpd<3.15:
+                    if self.maxSpd<2.75:
                         self.maxSpd+=0.002
                 elif keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
                     self.xv+=0.1225
                     self.facing = 1
                     self.animation='run'
-                    if self.maxSpd<3.15:
+                    if self.maxSpd<2.75:
                         self.maxSpd+=0.002
                 else:
-                    if self.maxSpd>1.8:
+                    if self.maxSpd>1.9:
                         self.maxSpd-=0.04
                 self.xv*=0.96
                 if self.facing == 0 or self.facing/self.xv<0:
-                    self.maxSpd = 1.8
+                    self.maxSpd = 1.9
 
             #In the air you have a lot less traction
             else:
@@ -555,7 +555,6 @@ class Player(pg.sprite.Sprite):
                 self.xv-=0.0425
             if self.xv<-self.maxSpd:
                 self.xv+=0.0425
-            print(self.maxSpd)
             
             #Forfeit floatiness with S or down arrow
             if keys[pg.K_s] or keys[pg.K_DOWN]:
