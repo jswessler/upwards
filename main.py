@@ -15,7 +15,7 @@ import heartrate
 
 path = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildIdentifier = "7/29/23-2" #Build Identifier
+buildIdentifier = "8/2/23-1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self):
@@ -350,6 +350,7 @@ class Player(pg.sprite.Sprite):
                     elif self.yv>4.5:
                         self.aniTimer = 20
                         self.animation = 'hardlanded'
+                        self.maxSpd=0.9
                         if self.yv>7.75:
                             dealDmg(3)
                         elif self.yv>6.5:
