@@ -13,9 +13,9 @@ import heart
 import heartrate
 #heartrate.trace(browser=True)
 
-path = os.getcwd() #Path to game directory
+gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildIdentifier = "8/9/23-1" #Build Identifier
+buildID = "8/11/23-1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self):
@@ -58,7 +58,7 @@ class Player(pg.sprite.Sprite):
         if self.animation=='landed':
             if self.aniTimer<0:
                 self.animation = 'none'
-            self.img = pg.image.load(os.path.join(path,"Images","Aria","land.png"))
+            self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","land.png"))
             self.img = pg.transform.scale_by(self.img,2)
             if self.dFacing==-1:
                 self.img = pg.transform.flip(self.img,True,False)
@@ -69,11 +69,11 @@ class Player(pg.sprite.Sprite):
             if self.aniTimer<0:
                 self.animation = 'none'
             if self.aniTimer>11:
-                self.img = pg.image.load(os.path.join(path,"Images","Aria","hardland1.png"))
+                self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hardland1.png"))
             elif self.aniTimer>7:
-                self.img = pg.image.load(os.path.join(path,"Images","Aria","hardland2.png"))
+                self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hardland2.png"))
             else:
-                self.img = pg.image.load(os.path.join(path,"Images","Aria","hardland3.png"))
+                self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hardland3.png"))
             self.img = pg.transform.scale_by(self.img,2)
             if self.dFacing==-1:
                 self.img = pg.transform.flip(self.img,True,False)
@@ -99,7 +99,7 @@ class Player(pg.sprite.Sprite):
                     if self.aniFrame==18:
                         self.aniFrame=1
                     self.aniTimer = max(2,int(4.25-abs(self.xv)))
-                self.img = pg.image.load(os.path.join(path,"Images","Aria","run" + str(self.aniFrame) + ".png"))
+                self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","run" + str(self.aniFrame) + ".png"))
                 self.img = pg.transform.scale_by(self.img,2)
                 if self.dFacing==-1:
                     self.img = pg.transform.flip(self.img,True,False)
@@ -108,13 +108,13 @@ class Player(pg.sprite.Sprite):
             #Idle
             elif self.animation=='none':
                 if self.counter%60<16:
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","idle1.png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","idle1.png"))
                 elif self.counter%60<31:
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","idle2.png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","idle2.png"))
                 elif self.counter%60<47:
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","idle3.png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","idle3.png"))
                 else:
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","idle4.png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","idle4.png"))
                 self.img = pg.transform.scale_by(self.img,2)
                 if self.dFacing==-1:
                     self.img = pg.transform.flip(self.img,True,False)
@@ -136,14 +136,14 @@ class Player(pg.sprite.Sprite):
                     self.aniFrame=1
                 if self.energy>30:
                     if abs(self.xv)<0.5:
-                        self.img = pg.image.load(os.path.join(path,"Images","Aria","hovern" + str(self.aniFrame) + ".png"))
+                        self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hovern" + str(self.aniFrame) + ".png"))
                     else:
-                        self.img = pg.image.load(os.path.join(path,"Images","Aria","hoverr" + str(self.aniFrame) + ".png"))
+                        self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hoverr" + str(self.aniFrame) + ".png"))
                 else:
                     if abs(self.xv)<1:
-                        self.img = pg.image.load(os.path.join(path,"Images","Aria","hovernl" + str(self.aniFrame) + ".png"))
+                        self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hovernl" + str(self.aniFrame) + ".png"))
                     else:
-                        self.img = pg.image.load(os.path.join(path,"Images","Aria","hoverrl" + str(self.aniFrame) + ".png"))
+                        self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hoverrl" + str(self.aniFrame) + ".png"))
                 self.img = pg.transform.scale_by(self.img,2)
                 if self.dFacing==-1:
                     self.img = pg.transform.flip(self.img,True,False)
@@ -160,7 +160,7 @@ class Player(pg.sprite.Sprite):
                         self.nextAni='none'
                         self.animation='falling'
                     #After 3 frames, go to standard falling animation
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","jumptrans" + str(int((18-self.aniiTimer)/5)) + ".png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","jumptrans" + str(int((18-self.aniiTimer)/5)) + ".png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -171,7 +171,7 @@ class Player(pg.sprite.Sprite):
                     if self.aniiTimer<=0:
                         self.nextAni='none'
                         self.animation='falling'
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","lowtrans2.png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","lowtrans2.png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -182,7 +182,7 @@ class Player(pg.sprite.Sprite):
                     if self.aniiTimer<=0:
                         self.nextAni='none'
                         self.animation='falling'
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","lowtrans" + str(int((18-self.aniiTimer)/5)) + ".png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","lowtrans" + str(int((18-self.aniiTimer)/5)) + ".png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -203,7 +203,7 @@ class Player(pg.sprite.Sprite):
                         self.aniTimer=3
                     if self.aniFrame>4:
                         self.nextAni='mid'
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","djump" + str(min(3,self.aniFrame)) + ".png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djump" + str(min(3,self.aniFrame)) + ".png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -219,7 +219,7 @@ class Player(pg.sprite.Sprite):
                     if self.aniFrame==3:
                         self.nextAni='djump'
                         self.animation='none'
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","djumpup" + str(min(2,self.aniFrame)) + ".png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djumpup" + str(min(2,self.aniFrame)) + ".png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -235,7 +235,7 @@ class Player(pg.sprite.Sprite):
                     if self.aniFrame==3:
                         self.nextAni='djump'
                         self.animation='none'
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","djumpdown" + str(min(2,self.aniFrame)) + ".png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djumpdown" + str(min(2,self.aniFrame)) + ".png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -248,9 +248,9 @@ class Player(pg.sprite.Sprite):
                     self.nextAni='high'
                     self.aniTimer=6
                     if self.counter%30<16:
-                        self.img = pg.image.load(os.path.join(path,"Images","Aria","jumpup1.png"))
+                        self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","jumpup1.png"))
                     else:
-                        self.img = pg.image.load(os.path.join(path,"Images","Aria","jumpup2.png"))
+                        self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","jumpup2.png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -271,7 +271,7 @@ class Player(pg.sprite.Sprite):
                         self.aniTimer=(20-(2*self.yv))
                     if self.aniFrame>4:
                         self.aniFrame=1
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","flail" + str(self.aniFrame) + ".png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","flail" + str(self.aniFrame) + ".png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -280,7 +280,7 @@ class Player(pg.sprite.Sprite):
                 elif self.nextAni=='fftrans':
                     if self.aniTimer<0:
                         self.nextAni='fastfall'
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","fftrans.png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","fftrans.png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -297,7 +297,7 @@ class Player(pg.sprite.Sprite):
                         self.nextAni='fftrans'
                         self.animation='none'
                         self.aniTimer=9
-                    self.img = pg.image.load(os.path.join(path,"Images","Aria","falling" + str(self.aniFrame) + ".png"))
+                    self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","falling" + str(self.aniFrame) + ".png"))
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
@@ -516,6 +516,11 @@ class Player(pg.sprite.Sprite):
 
                     #self.animation = 'dive'
             
+            #Kunai Spawning on e or click
+            if kunais > 0 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
+                spawnedKunai.append(Kunai(self.xpos,self.ypos,10,0))
+
+
             #Directional Inputs
             self.facing = 0
 
@@ -595,11 +600,36 @@ class Player(pg.sprite.Sprite):
             self.dt-=1
         pl.animations()
 
+
+
+class Kunai(pg.sprite.Sprite):
+    def __init__(self,xpos,ypos,xv,yv):
+        self.xpos = xpos
+        self.ypos = ypos
+        self.xv = xv
+        self.yv = yv
+        self.gravity = 0.1
+        self.image = pg.image.load(os.path.join(gamePath,"Images", "UI", "pixelkunai.png"))
+        self.image = pg.transform.scale2x(self.image)
+        self.kunaiSens = Sensor(self)
+    def update(self):
+        self.yv -=self.gravity
+        self.xpos+=self.xv
+        self.ypos+=self.yv
+        if self.kunaiSens.detect(self.xpos+self.xv*2,self.ypos+self.yv*2)[0] == 1:
+            #hit a wall
+            self.xv = 0
+            self.yv = 0
+            self.gravity = 0
+
+
+
+
 class Sensor(pg.sprite.Sprite):
     def __init__(self,orig):
         self.orig = orig
     
-    def detect(self,x,y,show=False):
+    def detect(self,x,y,show=True):
         global camerax,cameray
         xp = self.orig.xpos+x+self.orig.xv
         yp = self.orig.ypos+y+self.orig.yv
@@ -622,7 +652,7 @@ starty = 0
 loadFrom = 'lvl1.arl'
 def loadARL(filename): #Level loading algorithm
     global level,levelSub,width,height,loadedTiles
-    f = open(os.path.join(path,"Levels",filename),'rb')
+    f = open(os.path.join(gamePath,"Levels",filename),'rb')
     bites = f.read()
     f.close()
     counter = 0
@@ -669,7 +699,7 @@ def loadARL(filename): #Level loading algorithm
     setBlock = set(blocks)
     for i in setBlock:
         try:
-            loadedTiles[i] = pg.image.load(os.path.join(path,"Images", "Tiles", str(int(i/256)) + "-" + str(int(i%256)) + ".png"))
+            loadedTiles[i] = pg.image.load(os.path.join(gamePath,"Images", "Tiles", str(int(i/256)) + "-" + str(int(i%256)) + ".png"))
         except:
             pass
 
@@ -797,6 +827,8 @@ running = True
 state = 'game'
 f=1
 fList = [idealFps]
+spawnedKunai = []
+kunais = 5
 fps = pg.time.Clock()
 textfont = pg.font.SysFont('Times New Roman',36)
 smallfont = pg.font.SysFont('Times New Roman',14)
@@ -886,7 +918,7 @@ while running:
         else:
             boxWidth=WID-100
             if txt==[]:
-                f = open(os.path.join(path,"Phone Calls", str(int(nextCall)) + ".txt"),'r')
+                f = open(os.path.join(gamePath,"Phone Calls", str(int(nextCall)) + ".txt"),'r')
                 txt = f.read()
             
             if waitCounter<=0:
@@ -939,6 +971,11 @@ while running:
     if pl.img!='':
         screen.blit(pl.img,((pl.xpos-camerax+pl.imgPos[0])*gameScale,(pl.ypos-cameray+pl.imgPos[1])*gameScale))
 
+    #Draw Kunais & do Kunai physics
+    for kunai in spawnedKunai:
+        kunai.update()
+        screen.blit(kunai.image,((kunai.xpos-camerax+pl.imgPos[0])*gameScale,(kunai.ypos-cameray+pl.imgPos[1])*gameScale))
+
     #Draw Blocks
     re=0
     for x in range(max(0,int(camerax-32)),min(width*32,int((camerax+WID+32))),32):
@@ -970,7 +1007,7 @@ while running:
     if triggerPhone:
         phoneCounter+=1
         if counter%2==0:
-            phoneImg = pg.image.load(os.path.join(path,"Images","Phone","phone" + str(1+int((counter%6)/2)) + ".png"))
+            phoneImg = pg.image.load(os.path.join(gamePath,"Images","Phone","phone" + str(1+int((counter%6)/2)) + ".png"))
             phoneImg = pg.transform.scale_by(phoneImg,max(2,min(4,7-phoneCounter/10)))
         if phoneCounter>380*(idealFps/60):
             triggerPhone=False
@@ -993,7 +1030,7 @@ while running:
     else:
 
         if counter%60==0 or phoneCounter!=0:
-            phoneImg = pg.image.load(os.path.join(path,"Images","Phone","normal1.png"))
+            phoneImg = pg.image.load(os.path.join(gamePath,"Images","Phone","normal1.png"))
             phoneImg = pg.transform.scale_by(phoneImg,4)
             phoneRect = pg.Rect(WID-80,15,60,100)
         if phoneRect.collidepoint(pg.mouse.get_pos()) and pg.mouse.get_pressed()[0]:
@@ -1011,8 +1048,8 @@ while running:
 
     #Draw Hearts & Hex
     if counter%600==0:
-        hexImg = pg.image.load(os.path.join(path,"Images","UI","hex2x.png"))
-        hexImg = pg.transform.scale_by(hexImg,0.5)
+        hexImg = pg.image.load(os.path.join(gamePath,"Images","UI","hex.png"))
+        hexImg = pg.transform.smoothscale_by(hexImg,0.1)
 
     HUD.blit(hexImg,(10,HEI-160))
 
@@ -1020,7 +1057,7 @@ while running:
     for hp in health:
         if redrawHearts:
             try:
-                hp.setImg(pg.image.load(os.path.join(path,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png")))
+                hp.setImg(pg.image.load(os.path.join(gamePath,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png")))
             except:
                 health.pop(health.index(hp))
             hp.img = pg.transform.scale_by(hp.img,4)
@@ -1042,22 +1079,22 @@ while running:
             pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (220-(pl.energy*6),40+(pl.energy*6),40) if pl.energy<30 else (40,300-pl.energy,-400+(pl.energy*6)) if pl.energy>80 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
     
     #Disclaimer
-    tsurface = smallfont.render(str(buildIdentifier) + " - This footage does not neccesarily represent the final game.",True,(230,230,230))
-    HUD.blit(tsurface,(10,10))
+    tsurface = smallfont.render(str(buildID),True,(230,230,230))
+    HUD.blit(tsurface,(10,HEI-16))
     
     #Debug Stats
     if ke[pg.K_r]:
         tsurface = smallfont.render(str(pl.xv),True,(230,230,230))
-        HUD.blit(tsurface,(10,35))
+        HUD.blit(tsurface,(10,HEI-250))
         tsurface = smallfont.render(str(pl.yv),True,(230,230,230))
-        HUD.blit(tsurface,(10,50))
+        HUD.blit(tsurface,(10,HEI-265))
         tsurface = smallfont.render(str(pl.maxSpd),True,(230,230,230))
-        HUD.blit(tsurface,(10,65))
+        HUD.blit(tsurface,(10,HEI-280))
         avgFps = sum(fList)/len(fList)
         tsurface = smallfont.render(str(round(avgFps,2)) + " fps",True,(230,230,230))
-        HUD.blit(tsurface,(10,80))
+        HUD.blit(tsurface,(10,HEI-295))
         tsurface = smallfont.render(str(round(1000/f,2)) + " fps",True,(230,230,230))
-        HUD.blit(tsurface,(10,95))
+        HUD.blit(tsurface,(10,HEI-310))
 
 
     targetFps=min(idealFps,avgFps)
