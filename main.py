@@ -15,7 +15,7 @@ import heartrate
 
 path = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildIdentifier = "8/2/23-1" #Build Identifier
+buildIdentifier = "8/9/23-1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self):
@@ -98,7 +98,7 @@ class Player(pg.sprite.Sprite):
                     self.aniFrame+=1
                     if self.aniFrame==18:
                         self.aniFrame=1
-                    self.aniTimer = int(4.25-abs(self.xv))
+                    self.aniTimer = max(2,int(4.25-abs(self.xv)))
                 self.img = pg.image.load(os.path.join(path,"Images","Aria","run" + str(self.aniFrame) + ".png"))
                 self.img = pg.transform.scale_by(self.img,2)
                 if self.dFacing==-1:
@@ -350,7 +350,7 @@ class Player(pg.sprite.Sprite):
                     elif self.yv>4.5:
                         self.aniTimer = 20
                         self.animation = 'hardlanded'
-                        self.maxSpd=0.9
+                        self.maxSpd=1.5
                         if self.yv>7.75:
                             dealDmg(3)
                         elif self.yv>6.5:
@@ -494,22 +494,22 @@ class Player(pg.sprite.Sprite):
 
             #Dive
             if keys[pg.K_LCTRL]:
-                if self.abilities[3]==2 and self.abilities[0]<=0 and self.energy>10:
+                if self.abilities[3]>0 and self.abilities[0]<=0 and self.energy>10:
                     if self.xv>=0:
                         self.xv = 4.125
                     else:
                         self.xv = -4.125
-                    self.yv-=1.5
+                    self.yv-=0.12
                     self.abilities[2]=0
-                    self.abilities[3]=1
-                    self.energy-=10
-                    self.maxSpd = 3.4
+                    self.abilities[3]-=0.1
+                    self.energy-=1
+                    self.maxSpd = 3.35
 
                     self.animation = 'jump'
 
 
                 #Dive Float
-                elif self.abilities[3]==1 and not keys[pg.K_SPACE] and not keys[pg.K_UP] and self.energy>0.15:
+                elif self.abilities[3]>0 and not keys[pg.K_SPACE] and not keys[pg.K_UP] and self.energy>0.15:
                     self.xv*=1.013
                     self.yv*=0.9975
                     self.energy-=0.15
@@ -556,6 +556,8 @@ class Player(pg.sprite.Sprite):
                 self.xv-=0.0425
             if self.xv<-self.maxSpd:
                 self.xv+=0.0425
+            if self.maxSpd>2.75:
+                self.maxSpd-=0.01
             
             #Forfeit floatiness with S or down arrow
             if keys[pg.K_s] or keys[pg.K_DOWN]:
@@ -704,12 +706,13 @@ def playerCollisionDetection(type,block,subtype):
 
     #Dash Crystal
     if type == 4:
-        pl.abilities[2] = 4
-        pl.abilities[3] = 2
-        pl.abilities[4] = 2
-        pl.energy = 100
-        setLevelBlock(block,6,30)
-        heal(1)
+        if subtype<3:
+            pl.abilities[2] = 4
+            pl.abilities[3] = 2
+            pl.abilities[4] = 2
+            pl.energy = 100
+            setLevelBlock(block,6,(subtype*10)+30)
+            heal(1)
     
     #Maintinence
     if type == 5:
@@ -1048,7 +1051,7 @@ while running:
         HUD.blit(tsurface,(10,35))
         tsurface = smallfont.render(str(pl.yv),True,(230,230,230))
         HUD.blit(tsurface,(10,50))
-        tsurface = smallfont.render(str(pl.abilities),True,(230,230,230))
+        tsurface = smallfont.render(str(pl.maxSpd),True,(230,230,230))
         HUD.blit(tsurface,(10,65))
         avgFps = sum(fList)/len(fList)
         tsurface = smallfont.render(str(round(avgFps,2)) + " fps",True,(230,230,230))

@@ -2,8 +2,9 @@
 
 A game by jswessler
 
-8/1/23 Build 1
+8/9/23 Build 1
 - Lowered top speed
+- Various Fixes
 
 
 7/31/23 Build 3
