@@ -2,6 +2,9 @@
 
 A game by jswessler
 
+8/11/23 Build 1
+* Added throwing knives & HUD
+
 8/9/23 Build 1
 - Lowered top speed
 - Various Fixes

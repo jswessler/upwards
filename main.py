@@ -36,17 +36,19 @@ class Player(pg.sprite.Sprite):
         self.dFacing = 1
         self.animation = 'falling'
         self.nextAni = 'none'
-        self.aniFrame=1
+        self.aniFrame = 1
         self.aniTimer = 0
         self.aniiTimer = 0
         self.dt = 0
         self.maxSpd = 2.05
+        self.kunaiAni = 0
 
         #Collision Boxes. bottom, top, right, left
         #This list is in that order
         self.col = [12,-100,25,-25]
     
     def animations(self):
+        global kunais,kuAni
         if self.aniTimer>=0:
             self.aniTimer-=60/targetFps
         self.aniiTimer-=60/targetFps
@@ -89,6 +91,19 @@ class Player(pg.sprite.Sprite):
 
 
         #Ground Animations
+
+        if self.kunaiAni > 0:
+            self.kunaiAni -= 1
+            if self.kunaiAni == 37: #Spawn a kunai on frame 37
+                kuAni = 0
+                #Determine direction
+                dx, dy, dir = cosTowardMouse(mousex-(self.xpos-camerax),mousey-(self.ypos-cameray))
+                dx+=random.uniform(-0.04,0.04)
+                dy+=random.uniform(-0.04,0.04)
+                spawnedKunai.append(Kunai(self.xpos,self.ypos-65,dx*28,dy*28))
+            if self.kunaiAni < 1:
+                self.kunaiAni = 0
+                kunais-=1
 
         elif self.onGround:
             
@@ -305,6 +320,7 @@ class Player(pg.sprite.Sprite):
 
     #Run Every Frame
     def update(self,keys):
+        global kunais
         self.counter+=60/targetFps
         self.dt+=240/targetFps
 
@@ -323,8 +339,10 @@ class Player(pg.sprite.Sprite):
             if self.jCounter>0:
                 self.jCounter-=0.25
             
+            if self.energy<0:
+                self.energy+=0.1
             if self.energy < 20:
-                eRegen = (self.energy / 105)+0.001
+                eRegen = (self.energy / 105)+0.005
             elif self.energy < 75:
                 eRegen = 0.19
             else:
@@ -409,7 +427,8 @@ class Player(pg.sprite.Sprite):
                 #Jump Extension
                 if not self.onGround and self.abilities[0]<=0 and self.abilities[1]>0 and self.energy>0.175:
                     self.yv-=0.032
-                    self.energy-=0.175
+                    if self.abilities[1]<12.5:
+                        self.energy-=0.175
                     self.abilities[1]-=0.25
 
 
@@ -517,9 +536,13 @@ class Player(pg.sprite.Sprite):
                     #self.animation = 'dive'
             
             #Kunai Spawning on e or click
-            if kunais > 0 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
-                spawnedKunai.append(Kunai(self.xpos,self.ypos,10,0))
-
+            if kunais > 0 and self.kunaiAni<18 and self.energy>8 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
+                if self.kunaiAni!=0:
+                    kunais-=1
+                    self.energy-=2
+                self.kunaiAni = 40
+                self.energy-=8
+                #self.animation = 'none'
 
             #Directional Inputs
             self.facing = 0
@@ -591,8 +614,8 @@ class Player(pg.sprite.Sprite):
                 self.dFacing = self.facing
             
             #Caps on vertical speed
-            if not -3.5<self.yv<8.5:
-                self.yv*=0.96
+            if not -3<self.yv<8.5:
+                self.yv*=0.985
             
             #Updating x & y pos
             self.xpos+=self.xv
@@ -603,24 +626,42 @@ class Player(pg.sprite.Sprite):
 
 
 class Kunai(pg.sprite.Sprite):
-    def __init__(self,xpos,ypos,xv,yv):
+    def __init__(self, xpos, ypos, xv, yv):
         self.xpos = xpos
         self.ypos = ypos
         self.xv = xv
         self.yv = yv
         self.gravity = 0.1
-        self.image = pg.image.load(os.path.join(gamePath,"Images", "UI", "pixelkunai.png"))
-        self.image = pg.transform.scale2x(self.image)
+        self.stuck = False
+        self.timeAlive = 0
+        self.baseImage = pg.image.load(os.path.join(gamePath,"Images", "UI", "pixelkunai.png"))
+        self.baseImage = pg.transform.scale2x(self.baseImage)
         self.kunaiSens = Sensor(self)
+        self.direction = 0
     def update(self):
-        self.yv -=self.gravity
-        self.xpos+=self.xv
-        self.ypos+=self.yv
-        if self.kunaiSens.detect(self.xpos+self.xv*2,self.ypos+self.yv*2)[0] == 1:
+        global kunais
+        self.timeAlive += 1
+        self.direction = cosTowardMouse(self.xv,self.yv)[2]
+        self.image = pg.transform.rotate(self.baseImage,-math.degrees(self.direction))
+        self.yv += self.gravity
+        if not self.stuck:
+            self.xpos += self.xv
+            self.ypos += self.yv
+        if any(self.kunaiSens.detect(int(math.sin(i)*10),int(math.cos(i)*10),True)[0]==1 for i in range(-3,3,1)):
             #hit a wall
-            self.xv = 0
-            self.yv = 0
+            self.stuck = True
             self.gravity = 0
+        else:
+            self.stuck = False
+            self.gravity = 0.1
+        if getDist(self.xpos,self.ypos,pl.xpos,pl.ypos)<300 and self.timeAlive>60:
+            self.stuck = False
+            self.xv = (self.xpos-pl.xpos)/-12
+            self.yv = (self.ypos-pl.ypos)/-12
+            if getDist(self.xpos,self.ypos,pl.xpos,pl.ypos)<50:
+                kunais+=1
+                spawnedKunai.pop(spawnedKunai.index(self))
+                del(self)
 
 
 
@@ -644,13 +685,13 @@ class Sensor(pg.sprite.Sprite):
         return ret,block,subtype
 
 
-
+#Level loading routine
 width = 0
 height = 0
 startx = 0
 starty = 0
 loadFrom = 'lvl1.arl'
-def loadARL(filename): #Level loading algorithm
+def loadARL(filename):
     global level,levelSub,width,height,loadedTiles
     f = open(os.path.join(gamePath,"Levels",filename),'rb')
     bites = f.read()
@@ -704,7 +745,22 @@ def loadARL(filename): #Level loading algorithm
             pass
 
 
-def moveCamera(mousex,mousey,rxy=0): #Camera moving algorithm
+def cosTowardMouse(relx,rely):
+    dir = math.atan2(rely,relx)
+    yf = math.sin(dir)
+    xf = math.cos(dir)
+    return xf,yf,dir
+    
+
+def getDist(ix,iy,dx,dy):
+    fx = dx-ix
+    fy = dy-iy
+    final = math.sqrt((fx**2)+(fy**2))
+    return final
+
+
+#Camera moving algorithm
+def moveCamera(mousex,mousey,rxy=0):
     global camerax,cameray,diffcx,diffcy,ke
     if (4*WID/10)<mousex<(6*WID/10):
         camx = WID/2
@@ -822,13 +878,14 @@ pg.init()
 WID = 1280
 HEI = 800
 gameScale = 1.0
-screen = pg.display.set_mode((WID,HEI),pg.DOUBLEBUF,vsync=True)
+screen = pg.display.set_mode((WID,HEI),pg.DOUBLEBUF|pg.RESIZABLE,vsync=True)
 running = True
 state = 'game'
 f=1
 fList = [idealFps]
 spawnedKunai = []
 kunais = 5
+kuAni = -1
 fps = pg.time.Clock()
 textfont = pg.font.SysFont('Times New Roman',36)
 smallfont = pg.font.SysFont('Times New Roman',14)
@@ -857,6 +914,9 @@ health = [heart.Heart(1,4),heart.Heart(1,4)]
 
 counter = 0
 
+kunaiImg = pg.image.load(os.path.join(gamePath,"Images","UI","kunai.png"))
+kunaiImg = pg.transform.rotate(kunaiImg,-4.289)
+kunaiImg = pg.transform.smoothscale_by(kunaiImg,0.15)
 
 
 #Main Game Loop
@@ -871,7 +931,7 @@ while running:
             running = False
     screen.fill((30,30,30))
     ke = pg.key.get_pressed()
-    gameScale = (HEI/800)
+    #gameScale = (HEI/800)
 
     #Only if the physics are running
     if state=='game':
@@ -974,7 +1034,28 @@ while running:
     #Draw Kunais & do Kunai physics
     for kunai in spawnedKunai:
         kunai.update()
-        screen.blit(kunai.image,((kunai.xpos-camerax+pl.imgPos[0])*gameScale,(kunai.ypos-cameray+pl.imgPos[1])*gameScale))
+        screen.blit(kunai.image,((kunai.xpos-camerax)*gameScale,(kunai.ypos-cameray)*gameScale))
+    
+    #Draw HUD Kunais
+    for i in range(0,kunais):
+        kunaiImg.set_alpha(255)
+        if i == 0:
+            if 0<=kuAni<=14:
+                kunaiImg.set_alpha(255-(kuAni*15))
+                HUD.blit(kunaiImg,(WID-100-(i*38)+kuAni,HEI-150-(i*3)-(kuAni*kuAni+kuAni)))
+            elif kuAni >= 39 or kuAni == -1:
+                HUD.blit(kunaiImg,(WID-100-(i*38),HEI-150-(i*3)))
+        else:   
+            if 24<=kuAni<=40:
+                HUD.blit(kunaiImg,(WID-152-(i*38)+(kuAni*2.3),HEI-154-(i*3)+(kuAni/5)))
+            else:
+                HUD.blit(kunaiImg,(WID-100-(i*38),HEI-150-(i*3)))
+
+
+    if kuAni!=-1:
+        kuAni+=1
+    if kuAni >= 40:
+        kuAni = -1
 
     #Draw Blocks
     re=0
