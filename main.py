@@ -634,6 +634,7 @@ class Kunai(pg.sprite.Sprite):
         self.gravity = 0.1
         self.stuck = False
         self.timeAlive = 0
+        self.timeHoming = 0
         self.baseImage = pg.image.load(os.path.join(gamePath,"Images", "UI", "pixelkunai.png"))
         self.baseImage = pg.transform.scale2x(self.baseImage)
         self.kunaiSens = Sensor(self)
@@ -655,13 +656,17 @@ class Kunai(pg.sprite.Sprite):
             self.stuck = False
             self.gravity = 0.1
         if getDist(self.xpos,self.ypos,pl.xpos,pl.ypos)<300 and self.timeAlive>60:
+            if self.timeHoming < 90:
+                self.timeHoming += 1
             self.stuck = False
-            self.xv = (self.xpos-pl.xpos)/-12
-            self.yv = (self.ypos-pl.ypos)/-12
-            if getDist(self.xpos,self.ypos,pl.xpos,pl.ypos)<50:
+            self.xv = (self.xpos-pl.xpos)/-(18-(self.timeHoming/5))
+            self.yv = (self.ypos-pl.ypos+50)/-(18-(self.timeHoming/5))
+            if getDist(self.xpos,self.ypos,pl.xpos,pl.ypos)<60:
                 kunais+=1
                 spawnedKunai.pop(spawnedKunai.index(self))
                 del(self)
+        else:
+            self.timeHoming = 0
 
 
 
