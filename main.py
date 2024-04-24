@@ -15,7 +15,7 @@ import heartrate
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildID = "8/11/23-1" #Build Identifier
+buildID = "id42424.1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self):
@@ -43,8 +43,7 @@ class Player(pg.sprite.Sprite):
         self.maxSpd = 2.05
         self.kunaiAni = 0
 
-        #Collision Boxes. bottom, top, right, left
-        #This list is in that order
+        #Collision Boxes. bottom, top, right, left (in that order)
         self.col = [12,-100,25,-25]
     
     def animations(self):
@@ -100,7 +99,7 @@ class Player(pg.sprite.Sprite):
                 dx, dy, dir = cosTowardMouse(mousex-(self.xpos-camerax),mousey-(self.ypos-cameray))
                 dx+=random.uniform(-0.04,0.04)
                 dy+=random.uniform(-0.04,0.04)
-                spawnedKunai.append(Kunai(self.xpos,self.ypos-65,dx*28,dy*28))
+                spawnedKunai.append(Kunai(self.xpos,self.ypos-70,dx*30,dy*30))
             if self.kunaiAni < 1:
                 self.kunaiAni = 0
                 kunais-=1
@@ -324,6 +323,7 @@ class Player(pg.sprite.Sprite):
         self.counter+=60/targetFps
         self.dt+=240/targetFps
 
+        #Do collision detection using 15 points scattered around your model
         for i in range(-96,16,32):
             for j in range(-12,12,12):
                 det,bl,st = se.detect(j,i,True)
@@ -349,8 +349,8 @@ class Player(pg.sprite.Sprite):
                 eRegen = max(0.005,0.0075 + (100-self.energy) / 250)
             for heart in health:
                 if heart.type == 3:
-                    eRegen*=1.2
-                    self.energy+=0.01
+                    eRegen*=1.1
+                    self.energy+=0.025
 
 
 
@@ -361,7 +361,7 @@ class Player(pg.sprite.Sprite):
             
                 if self.onGround==False:
                     self.ypos+=1
-                    self.energy+=(6*eRegen)+0.5
+                    self.energy+=(6*eRegen)+0.5 #give you a bit of energy on landing
                     if 0.5<self.yv<4.5:
                         self.animation = 'landed'
                         self.aniTimer = 1+int(self.yv*2.5)
@@ -566,12 +566,12 @@ class Player(pg.sprite.Sprite):
                         self.maxSpd-=0.04
                 self.xv*=0.96
                 if self.facing == 0 or self.facing/self.xv<0:
-                    self.maxSpd = 1.9
+                    self.maxSpd = 2
 
             #In the air you have a lot less traction
             else:
-                if self.maxSpd>2.2:
-                    self.maxSpd-=0.0025
+                if self.maxSpd>2.25:
+                    self.maxSpd-=0.002
                 if keys[pg.K_a] or keys[pg.K_LEFT] and self.onWall!=-1:
                     self.xv-=0.02
                     self.facing = -1
@@ -623,8 +623,6 @@ class Player(pg.sprite.Sprite):
             self.dt-=1
         pl.animations()
 
-
-
 class Kunai(pg.sprite.Sprite):
     def __init__(self, xpos, ypos, xv, yv):
         self.xpos = xpos
@@ -667,9 +665,6 @@ class Kunai(pg.sprite.Sprite):
                 del(self)
         else:
             self.timeHoming = 0
-
-
-
 
 class Sensor(pg.sprite.Sprite):
     def __init__(self,orig):
@@ -775,10 +770,6 @@ def moveCamera(mousex,mousey,rxy=0):
         camy = HEI/2
     else:
         camy = mousey
-    
-    #Draw a center box
-    if (4*HEI/10)<mousey<(6*HEI/10) and (4*WID/10)<mousex<(6*WID/10):
-        pg.draw.rect(screen,(60,60,60),pg.Rect(4*WID/10,4*HEI/10,WID/5,HEI/5),3)
     
     #Adjust camera parameters
     tx = pl.xpos+(pl.xv*128)+(pl.dFacing*128)-(WID/2)+(camx-WID/2)/3
@@ -936,7 +927,7 @@ while running:
             running = False
     screen.fill((30,30,30))
     ke = pg.key.get_pressed()
-    #gameScale = (HEI/800)
+    #gameScale = (HEI/800) #Set game scale to the window size
 
     #Only if the physics are running
     if state=='game':
@@ -986,18 +977,18 @@ while running:
                 f = open(os.path.join(gamePath,"Phone Calls", str(int(nextCall)) + ".txt"),'r')
                 txt = f.read()
             
-            if waitCounter<=0:
+            if waitCounter <= 0:
                 if ke[pg.K_x] or ke[pg.K_TAB]:
-                    waitCounter=0
+                    waitCounter = 0
                 else:
-                    waitCounter=random.randint(0,1)
-                if charCounter<len(txt):
+                    waitCounter = random.randint(0,1)
+                if charCounter < len(txt):
                     i=txt[charCounter] #Important
-                    if line==-1:
-                        textName+=i
+                    if line == -1:
+                        textName += i
                         if i=='\n':
-                            line=0
-                        charCounter+=1
+                            line = 0
+                        charCounter += 1
                     else:
                         if i!='\\':
                             currentText[line]+=i
@@ -1005,27 +996,27 @@ while running:
                         else:
                             j = txt[charCounter+1]
                             if j=='.':
-                                waitCounter=10
-                                charCounter+=2
+                                waitCounter = 15
+                                charCounter += 2
                             elif j==',':
-                                waitCounter=20
-                                charCounter+=2
+                                waitCounter = 25
+                                charCounter += 2
                             elif j=='|':
                                 waitCounter = 60
-                                charCounter+=2
+                                charCounter += 2
                             elif j=='t':
-                                charCounter+=2
+                                charCounter += 2
                                 line+=1
                             elif j=='n':
                                 if ke[pg.K_RETURN] or ke[pg.K_z]:
                                     currentText = ['','','']
                                     line = -1
-                                    charCounter+=2
+                                    charCounter += 2
 
                 else:
                     if ke[pg.K_RETURN] or ke[pg.K_z]:
                         currentText = ['','','']
-                        nextCall=0
+                        nextCall = 0
                         boxWidth = 0
                         state = 'game'
             else:
@@ -1085,7 +1076,7 @@ while running:
             if ke[pg.K_t]:
                 tsurface = smallfont.render(str(bl),True,(255,0,0) if bl!=0 else (180,180,180))
                 screen.blit(tsurface, ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-                tsurface = smallfont.render(str(blSub),True,(255,0,0) if bl!=0 else (180,180,180))
+                tsurface = smallfont.render(str(blSub),True,(255,0,0) if blSub!=0 else (180,180,180))
                 screen.blit(tsurface, ((x-camerax)*gameScale,(y+12-cameray)*gameScale,32*gameScale,32*gameScale))
 
                     
@@ -1181,6 +1172,9 @@ while running:
         HUD.blit(tsurface,(10,HEI-295))
         tsurface = smallfont.render(str(round(1000/f,2)) + " fps",True,(230,230,230))
         HUD.blit(tsurface,(10,HEI-310))
+        #Draw a center box (only on R press as of id versions)
+        if (4*HEI/10)<mousey<(6*HEI/10) and (4*WID/10)<mousex<(6*WID/10):
+            pg.draw.rect(screen,(60,60,60),pg.Rect(4*WID/10,4*HEI/10,WID/5,HEI/5),3)
 
 
     targetFps=min(idealFps,avgFps)

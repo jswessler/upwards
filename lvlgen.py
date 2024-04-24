@@ -7,7 +7,10 @@ from pygame import gfxdraw
 
 path = os.getcwd()
 
-def saveARL(ls,ls2,destionation):
+#Game build associated with lvl generator
+buildId = 'id42424.1'
+
+def saveARL(ls,ls2,dest):
     bitO = []
     bitO.append(0x41) #A
     bitO.append(0x52) #R
@@ -18,7 +21,9 @@ def saveARL(ls,ls2,destionation):
     bitO.append(int(lvlHei/256)) #High&Low byte of Height
     bitO.append(lvlHei%256)
     bitO.append(lvlNum) #Level Number
-    for i in range(0,55):
+    for i in buildId:
+        bitO.append(ord(i)) #build ID 
+    while len(bitO) < 64:
         bitO.append(0x00)
     counter = 0
     temp = 0b00000000
@@ -51,7 +56,7 @@ def saveARL(ls,ls2,destionation):
     bitO.append(int(c/256)%256) #Adding Checksum
     bitO.append(c%256)
     o = os.getcwd()
-    f = open(os.path.join(path,"Levels",str(destionation)),'wb')
+    f = open(os.path.join(path,"Levels",str(dest)),'wb')
     for byte in bitO:
         f.write(bytes([byte]))
     f.close()

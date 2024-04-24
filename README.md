@@ -2,6 +2,11 @@
 
 A game by jswessler
 
+id42424.1
+- Code&Comment adjustments
+- Adjusted Kunai behavior & spawn position
+- Level creator now tied to specific build
+
 8/11/23 Build 1
 * Added throwing knives & HUD
 
