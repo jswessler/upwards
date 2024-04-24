@@ -342,15 +342,15 @@ class Player(pg.sprite.Sprite):
             if self.energy<0:
                 self.energy+=0.1
             if self.energy < 20:
-                eRegen = (self.energy / 105)+0.005
+                eRegen = (self.energy / 110)+0.0045
             elif self.energy < 75:
-                eRegen = 0.19
+                eRegen = 0.18
             else:
                 eRegen = max(0.005,0.0075 + (100-self.energy) / 250)
             for heart in health:
                 if heart.type == 3:
-                    eRegen*=1.2
-                    self.energy+=0.01
+                    eRegen*=1.05
+                    self.energy+=0.005
 
 
 
@@ -368,7 +368,7 @@ class Player(pg.sprite.Sprite):
                     elif self.yv>4.5:
                         self.aniTimer = 20
                         self.animation = 'hardlanded'
-                        self.maxSpd=1.5
+                        self.maxSpd=1.4
                         if self.yv>7.75:
                             dealDmg(3)
                         elif self.yv>6.5:
@@ -386,11 +386,11 @@ class Player(pg.sprite.Sprite):
                 self.abilities[2] = 4
                 self.abilities[3] = 2
                 self.abilities[4] = 2
-                self.energy+=eRegen+0.001
+                self.energy+=eRegen+0.0025
             else:
                 self.onGround = False
                 self.gravity = 1
-                self.energy+=(eRegen/45*(max(0,self.yv)))
+                self.energy+=(eRegen/60*(max(0,self.yv)))
                     
 
                 #Up detection (only run when not on ground)
@@ -436,8 +436,8 @@ class Player(pg.sprite.Sprite):
                 if self.yv>0 and self.energy>0.1 and self.animation!='djumpdown':
                     self.yv-=0.015
                     self.yv*=0.97
-                    self.jCounter=1
-                    self.energy-=(0.06+(0.0125*abs(self.xv)))
+                    self.jCounter=2
+                    self.energy-=(0.0575+(0.0125*abs(self.xv)))
 
                     self.animation = 'hover'
 
@@ -447,7 +447,7 @@ class Player(pg.sprite.Sprite):
                     if self.yv>0:
                         self.yv*=0.25
                     self.yv-=0.325
-                    self.maxSpd = 2.8
+                    self.maxSpd = 2.9
                     self.xv*=1.0125
                     self.abilities[2]-=0.25
                     self.energy-=0.8
@@ -522,7 +522,7 @@ class Player(pg.sprite.Sprite):
                     self.abilities[2]=0
                     self.abilities[3]-=0.1
                     self.energy-=1
-                    self.maxSpd = 3.35
+                    self.maxSpd = 3.5
 
                     self.animation = 'jump'
 
@@ -553,25 +553,22 @@ class Player(pg.sprite.Sprite):
                     self.xv-=0.1225
                     self.facing = -1
                     self.animation='run'
-                    if self.maxSpd<2.75:
-                        self.maxSpd+=0.002
+                    if self.maxSpd<2.4:
+                        self.maxSpd+=0.004
                 elif keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
                     self.xv+=0.1225
                     self.facing = 1
                     self.animation='run'
-                    if self.maxSpd<2.75:
-                        self.maxSpd+=0.002
-                else:
-                    if self.maxSpd>1.9:
-                        self.maxSpd-=0.04
+                    if self.maxSpd<2.4:
+                        self.maxSpd+=0.004
+                if self.maxSpd>1.95:
+                    self.maxSpd-=0.002
                 self.xv*=0.96
-                if self.facing == 0 or self.facing/self.xv<0:
-                    self.maxSpd = 1.9
 
             #In the air you have a lot less traction
             else:
                 if self.maxSpd>2.2:
-                    self.maxSpd-=0.0025
+                    self.maxSpd-=0.00025
                 if keys[pg.K_a] or keys[pg.K_LEFT] and self.onWall!=-1:
                     self.xv-=0.02
                     self.facing = -1
@@ -937,7 +934,6 @@ while running:
     screen.fill((30,30,30))
     ke = pg.key.get_pressed()
     #gameScale = (HEI/800)
-
     #Only if the physics are running
     if state=='game':
         pl.update(ke)
