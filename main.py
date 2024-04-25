@@ -12,7 +12,7 @@ import heart
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id145.3" #Build Identifier
+buildId = "id145.4p" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -41,7 +41,7 @@ class Player(pg.sprite.Sprite):
         self.kunaiAni = 0
 
         #Collision Boxes. bottom, top, right, left (in that order)
-        self.col = [12,-100,25,-25]
+        self.col = [12,-100,30,-25]
     
     def animations(self):
         global kunais,kuAni
@@ -351,7 +351,7 @@ class Player(pg.sprite.Sprite):
             #Object Collision Detection
 
             #Ground Collision (self.col[0] is the bottom of the model)
-            if any(se.detect(i,self.col[0],True)[0]==1 for i in range(-24,25,8)):
+            if any(se.detect(i,self.col[0],True)[0]==1 for i in range(-21,29,7)):
             
                 if self.onGround==False:
                     self.ypos+=1
@@ -483,11 +483,11 @@ class Player(pg.sprite.Sprite):
 
                 #Slight hover at the end of jumps
                 if self.yv>-1 and self.jCounter>0:
-                    self.energy-=0.02
+                    self.energy-=0.05
                     self.gravity = 0.45
 
             #Wall slide 
-                if all(se.detect(self.facing*26,i,True)[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0:
+                if all(se.detect(self.facing*31,i,True)[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0:
                     self.jCounter=6
                     self.wallClimb = True
 
@@ -509,28 +509,20 @@ class Player(pg.sprite.Sprite):
             if keys[pg.K_LCTRL]:
                 if self.abilities[3]>0 and self.abilities[0]<=0 and self.energy>10:
                     if self.xv>=0:
-                        self.xv = 4.125
+                        self.xv = 4.25
                     else:
-                        self.xv = -4.125
-                    self.yv-=0.12
+                        self.xv = -4.25
+                    self.yv*=0.975
+                    self.yv-=0.125
                     self.abilities[2]=0
                     self.abilities[3]-=0.1
                     self.energy-=1
                     self.maxSpd = 3.35
 
-                    self.animation = 'jump'
-
-
-                #Dive Float
-                elif self.abilities[3]>0 and not keys[pg.K_SPACE] and not keys[pg.K_UP] and self.energy>0.15:
-                    self.xv*=1.013
-                    self.yv*=0.9975
-                    self.energy-=0.15
-
-                    #self.animation = 'dive'
+                    self.animation = 'jump' #change this when dive animation is implemented
             
             #Kunai Spawning on e or click
-            if kunais > 0 and self.kunaiAni<18 and self.energy>8 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
+            if kunais > 0 and self.kunaiAni<18 and self.energy>10 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
                 if self.kunaiAni!=0:
                     kunais-=1
                     self.energy-=2
@@ -559,7 +551,7 @@ class Player(pg.sprite.Sprite):
                     if self.maxSpd>1.9:
                         self.maxSpd-=0.04
                 self.xv*=0.96
-                if self.facing == 0 or self.facing/self.xv<0:
+                if self.facing == 0 or self.facing / self.xv<0:
                     self.maxSpd = 2
 
             #In the air you have a lot less traction
@@ -730,7 +722,6 @@ def loadARL(filename):
     level = lv
     levelSub = lv2
     bCounter = 0
-    print(spawn)
     blocks = []
     loadedTiles = ['']*65536
     for bl in level:
@@ -747,14 +738,14 @@ def loadARL(filename):
             pass
 
 
-def cosTowardMouse(relx,rely):
+def cosTowardMouse(relx,rely): #Used for mouse direction
     dir = math.atan2(rely,relx)
     yf = math.sin(dir)
     xf = math.cos(dir)
     return xf,yf,dir
     
 
-def getDist(ix,iy,dx,dy):
+def getDist(ix,iy,dx,dy): #Get distance between 2 points
     fx = dx-ix
     fy = dy-iy
     final = math.sqrt((fx**2)+(fy**2))
@@ -802,16 +793,16 @@ def playerCollisionDetection(type,block,subtype):
     #Maintinence
     if type == 5:
         if subtype == 1:
-            raise Exception("Forced Crash via 5-1 tile")
+            raise Exception("Forced Crash Via 5-1 Tile")
 
     #Blue Heart
-    elif type == 7:
-        health.insert(2,heart.Heart(2,4))
+    elif type == 7 and subtype <= 4:
+        health.insert(2,heart.Heart(2,(4 if subtype == 0 else subtype)))
         setLevelBlock(block,0,0)
         redrawHearts = True
     
     #Silver Heart
-    elif type == 8:
+    elif type == 8 and subtype <= 2:
         health.insert(2,heart.Heart(3,subtype))
         setLevelBlock(block,0,0)
         redrawHearts = True
@@ -825,7 +816,7 @@ def playerCollisionDetection(type,block,subtype):
     #Maintinence / Blood Heart
     elif type == 10:
         if subtype == 1:
-            health.insert(2,heart.Heart(4,1))
+            health.insert(2, heart.Heart(4,1))
             setLevelBlock(block,0,0)
             redrawHearts = True
 

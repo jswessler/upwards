@@ -7,6 +7,13 @@ id146.1 (planned)
 * Significantly reduced lag in level generator (by only drawing the part of the screen you're looking at)
 * Changed hex art
 
+id145.4p
+* Github is now public
+- Slightly reduced width of floor collision (to not interfere with the wall collision)
+- Cleaned up wall riding physics, extended right-side hitbox to better align with animiations
+- Removed extraneous dive behavior
+- Half/Quarter Blue hearts now heal properly
+
 id145.3
 - Made spawnpoints work properly
 
