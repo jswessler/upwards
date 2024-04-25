@@ -1,12 +1,23 @@
 # upwards
 
 A pygame platformer by jswessler
+Requires: pygame > 2.3, numpy
+
+id146.1 (planned)
+* Significantly reduced lag in level generator (by only drawing the part of the screen you're looking at)
+* Changed hex art
+- Made spawnpoints work properly (by embedding spawnpoint info in the arl file)
+
+id145.2
+- Made floor collision cover more of your body, which should eliminate getting stuck halfway in walls
 
 id145.1
 * You now spawn at a designated spawn point (5-0 tile). This currently only works if the spawnpoint is on-screen at the time of spawning naturally.
 * Level generator now has descriptions (based on lvldesc.txt)
 - Added speed option for level generator
 - Cleaned up 'Other' folder
+- Camera box is now only visible when pressing R
+- Camera box is 50% less sticky (mouse movement has 0.5x impact when in box, rather than 0x)
 
 id144.1 (previously id42424.1)
 - Code&Comment adjustments

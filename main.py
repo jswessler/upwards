@@ -10,12 +10,9 @@ import time
 
 import heart
 
-import heartrate
-#heartrate.trace(browser=True)
-
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id145.1" #Build Identifier
+buildId = "id145.2" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,):
@@ -52,7 +49,6 @@ class Player(pg.sprite.Sprite):
             self.aniTimer-=60/targetFps
         self.aniiTimer-=60/targetFps
 
-
         #Tumble Landing
         
         #Normal Landing
@@ -65,7 +61,7 @@ class Player(pg.sprite.Sprite):
                 self.img = pg.transform.flip(self.img,True,False)
             self.imgPos = [-36,-94]
         
-        #Hard Landing
+        #Hard Landing (11 frame animation with 3 images)
         elif self.animation=='hardlanded':
             if self.aniTimer<0:
                 self.animation = 'none'
@@ -91,6 +87,7 @@ class Player(pg.sprite.Sprite):
 
         #Ground Animations
 
+        #Throwing Kunai (not implemented, currently just locks your animation for 40 frames)
         if self.kunaiAni > 0:
             self.kunaiAni -= 1
             if self.kunaiAni == 37: #Spawn a kunai on frame 37
@@ -105,9 +102,8 @@ class Player(pg.sprite.Sprite):
                 kunais-=1
 
         elif self.onGround:
-            
-            #Run
-            if self.animation=='run' or abs(self.xv)>0.4:
+            #Run (17 frame animation, 1 aniframe per 4.25-2 frames depening on speed)
+            if self.animation=='run' or abs(self.xv)>0.35:
                 if self.aniTimer<0:
                     self.aniFrame+=1
                     if self.aniFrame==18:
@@ -119,7 +115,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.flip(self.img,True,False)
                 self.imgPos = [-36,-94]
             
-            #Idle
+            #Idle (4 frame animation on a mod%60)
             elif self.animation=='none':
                 if self.counter%60<16:
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","idle1.png"))
@@ -139,16 +135,16 @@ class Player(pg.sprite.Sprite):
         #Air Animations
 
         else:
-        #Hover
-            if self.animation=='hover':
-                self.nextAni='low'
-                self.animation='none'
-                if self.aniTimer<0:
-                    self.aniFrame+=1
-                    self.aniTimer=6
-                if self.aniFrame>6:
-                    self.aniFrame=1
-                if self.energy>30:
+        #Hover (2 frame animation, 6 frame interval, 2 extra frames when low on energy)
+            if self.animation == 'hover':
+                self.nextAni = 'low'
+                self.animation = 'none'
+                if self.aniTimer < 0:
+                    self.aniFrame += 1
+                    self.aniTimer = 6
+                if self.aniFrame > 6:
+                    self.aniFrame = 1
+                if self.energy > 30:
                     if abs(self.xv)<0.5:
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hovern" + str(self.aniFrame) + ".png"))
                     else:
@@ -223,7 +219,7 @@ class Player(pg.sprite.Sprite):
                         self.img = pg.transform.flip(self.img,True,False)
                     self.imgPos = [-76,-116]
                 
-                #Djump transition (up)
+                #Djump transition (when moving up)
                 elif self.animation=='djumpup':
                     if self.aniTimer<0:
                         self.aniFrame+=1
@@ -239,7 +235,7 @@ class Player(pg.sprite.Sprite):
                         self.img = pg.transform.flip(self.img,True,False)
                     self.imgPos = [-30,-112]
                 
-                #Djump transition (down)
+                #Djump transition (when moving down)
                 elif self.animation=='djumpdown':
                     if self.aniTimer<0:
                         self.aniFrame+=1
@@ -255,9 +251,7 @@ class Player(pg.sprite.Sprite):
                         self.img = pg.transform.flip(self.img,True,False)
                     self.imgPos = [-26,-96]
                     
-
-
-                #Jump
+                #First Jump (2 frame animation on mod%30 that plays as long as you're moving up)
                 elif self.animation=='jump':
                     self.nextAni='high'
                     self.aniTimer=6
@@ -356,12 +350,12 @@ class Player(pg.sprite.Sprite):
 
             #Object Collision Detection
 
-            #Ground Collision
-            if any(se.detect(i,self.col[0],True)[0]==1 for i in range(-17,16,6)):
+            #Ground Collision (self.col[0] is the bottom of the model)
+            if any(se.detect(i,self.col[0],True)[0]==1 for i in range(-24,25,8)):
             
                 if self.onGround==False:
                     self.ypos+=1
-                    self.energy+=(6*eRegen)+0.5 #give you a bit of energy on landing
+                    self.energy+=(5*eRegen)+0.5 #give you a bit of energy on landing
                     if 0.5<self.yv<4.5:
                         self.animation = 'landed'
                         self.aniTimer = 1+int(self.yv*2.5)
@@ -390,7 +384,7 @@ class Player(pg.sprite.Sprite):
             else:
                 self.onGround = False
                 self.gravity = 1
-                self.energy+=(eRegen/45*(max(0,self.yv)))
+                self.energy+=(eRegen/50*(max(0,self.yv)))
                     
 
                 #Up detection (only run when not on ground)
@@ -787,7 +781,8 @@ def moveCamera(mousex,mousey,rxy=0):
     diffcx = (-math.sqrt(abs(camerax-remcx)) if camerax-remcx<0 else math.sqrt(camerax-remcx))
     diffcy = (-math.sqrt(abs(cameray-remcy)) if cameray-remcy<0 else math.sqrt(cameray-remcy))
 
-#Defines collision detection between player and interactable objects
+#Defines collision detection between player and interactable objects (not walls)
+#Called 15 times per physics frame on 15 collision points arranged in a 5x3 grid on Aria
 def playerCollisionDetection(type,block,subtype):
     global level,levelSub,nextCall,triggerPhone,redrawHearts
     #Blocks are 1-3
