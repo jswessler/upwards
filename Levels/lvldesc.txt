@@ -1,7 +1,7 @@
 0-0\Empty
 1-0\Basic Block
 4-0\Dash Crystal
-5-0\Spawnpoint
+5-0\Spawn point
 5-1\Force Crash Tile
 7-0\Full Blue Heart
 7-1\Quarter Blue Heart

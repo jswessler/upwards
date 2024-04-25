@@ -12,12 +12,12 @@ import heart
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id145.2" #Build Identifier
+buildId = "id145.3" #Build Identifier
 
 class Player(pg.sprite.Sprite):
-    def __init__(self,):
-        self.xpos = WID/2
-        self.ypos = HEI/2
+    def __init__(self,spawn):
+        self.xpos = 32*(math.floor(spawn/width))
+        self.ypos = 32*(spawn%width)
         self.xv = 0
         self.yv = 0
         self.energy = 100
@@ -684,9 +684,10 @@ width = 0
 height = 0
 startx = 0
 starty = 0
+spawn = -1
 loadFrom = 'lvl1.arl'
 def loadARL(filename):
-    global level,levelSub,width,height,loadedTiles
+    global level,levelSub,width,height,loadedTiles, spawn
     f = open(os.path.join(gamePath,"Levels",filename),'rb')
     bites = f.read()
     f.close()
@@ -721,17 +722,18 @@ def loadARL(filename):
                 cou+=1
                 byte = bites[cou]
                 lv2.insert(counter-64,byte)
+            if lv[counter-64] == 5 and lv2[counter-64] == 0:
+                spawn = counter - 64
                 
         counter+=1
         cou+=1
     level = lv
     levelSub = lv2
     bCounter = 0
+    print(spawn)
     blocks = []
     loadedTiles = ['']*65536
     for bl in level:
-        #if bl == 5 and levelSub[bCounter] == 0: #If it's a spawnpoint block
-            #spawnpoint (not implemented correctly yet)
         if bl!=0:
             blocks.append((bl*256)+levelSub[bCounter])
         bCounter+=1
@@ -886,9 +888,10 @@ kuAni = -1
 fps = pg.time.Clock()
 textfont = pg.font.SysFont('Times New Roman',36)
 smallfont = pg.font.SysFont('Times New Roman',14)
-pl = Player()
-se = Sensor(pl)
 loadARL(loadFrom)
+pl = Player(spawn)
+se = Sensor(pl)
+
 
 camerax = 0
 cameray = 0
@@ -1056,18 +1059,14 @@ while running:
 
     #Draw Blocks
     re=0
-    for x in range(max(0,int(camerax-32)),min(width*32,int((camerax+WID+32))),32):
-        for y in range(max(0,int(cameray-32)),min(height*32,int((cameray+HEI+32))),32):
+    for x in range(max(0,int(camerax-24)),min(width*32,int((camerax+WID+24))),32):
+        for y in range(max(0,int(cameray-24)),min(height*32,int((cameray+HEI+24))),32):
             re+=1
             i = int(y/32)*width+int(x/32)
             x-=(x%32)
             y-=(y%32)
             bl = level[i]
             blSub = levelSub[i]
-            if bl==5 and blSub==0: #spawnpoint
-                pl.xpos = x
-                pl.ypos = y
-                level[i] = 0
             if bl==0 or bl==6 or bl==11 or bl==5:
                 pass
             else:

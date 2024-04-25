@@ -8,7 +8,7 @@ from pygame import gfxdraw
 path = os.getcwd()
 
 #Game build associated with lvl generator
-buildId = 'id145.2'
+buildId = 'id145.3'
 
 def saveARL(ls,ls2,dest):
     bitO = []
@@ -44,17 +44,18 @@ def saveARL(ls,ls2,dest):
             bitO.append(cur)
             bitO.append(cur2)
         counter+=1
-    bitO.append(0x00) #Ending
+    bitO.append(0x00) #Ending 4 bytes of 00
     bitO.append(0x00)
     bitO.append(0x00)
     bitO.append(0x00)
+    #Checksum
     c = 0
     for i in range(0,len(ls)):
         c+=ls[i]
         c+=ls2[i]
         c+=1
     bitO.append(int(c/256)%256) #Adding Checksum
-    bitO.append(c%256)
+    bitO.append(c%256) #2 byte checksum (65536)
     o = os.getcwd()
     f = open(os.path.join(path,"Levels",str(dest)),'wb')
     for byte in bitO:
@@ -160,7 +161,7 @@ while running:
             running = False
         if event.type == pg.MOUSEWHEEL:
             scrollDir = event.y
-    screen.fill((8,8,8))
+    screen.fill((10,5,5))
 
     ke = pg.key.get_pressed()
     if ke[pg.K_LSHIFT]: #2x Speed Scroll

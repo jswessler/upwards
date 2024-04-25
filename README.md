@@ -6,7 +6,9 @@ Requires: pygame > 2.3, numpy
 id146.1 (planned)
 * Significantly reduced lag in level generator (by only drawing the part of the screen you're looking at)
 * Changed hex art
-- Made spawnpoints work properly (by embedding spawnpoint info in the arl file)
+
+id145.3
+- Made spawnpoints work properly
 
 id145.2
 - Made floor collision cover more of your body, which should eliminate getting stuck halfway in walls
