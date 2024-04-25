@@ -1,8 +1,14 @@
 # upwards
 
-A game by jswessler
+A pygame platformer by jswessler
 
-id42424.1
+id145.1
+* You now spawn at a designated spawn point (5-0 tile). This currently only works if the spawnpoint is on-screen at the time of spawning naturally.
+* Level generator now has descriptions (based on lvldesc.txt)
+- Added speed option for level generator
+- Cleaned up 'Other' folder
+
+id144.1 (previously id42424.1)
 - Code&Comment adjustments
 - Adjusted Kunai behavior & spawn position
 - Level creator now tied to specific build
@@ -13,7 +19,6 @@ id42424.1
 8/9/23 Build 1
 - Lowered top speed
 - Various Fixes
-
 
 7/31/23 Build 3
 - Added maxSpd, you can now run 3.15u/f instead of 2.05u/f

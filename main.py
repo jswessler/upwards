@@ -15,10 +15,10 @@ import heartrate
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildID = "id42424.1" #Build Identifier
+buildId = "id145.1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
-    def __init__(self):
+    def __init__(self,):
         self.xpos = WID/2
         self.ypos = HEI/2
         self.xv = 0
@@ -716,10 +716,12 @@ def loadARL(filename):
             lv = [0] * (width*height)
             lv2 = [0] * (width*height)
         if counter>63: #Data
+            #If block is 0-0, skip ahead RLE bytes
             if byte==0:
                 cou+=1
                 byte = bites[cou]
                 counter+=byte-1
+            #Otherwise, add the block to the list
             else:
                 lv.insert(counter-64,byte)
                 cou+=1
@@ -734,9 +736,13 @@ def loadARL(filename):
     blocks = []
     loadedTiles = ['']*65536
     for bl in level:
+        #if bl == 5 and levelSub[bCounter] == 0: #If it's a spawnpoint block
+            #spawnpoint (not implemented correctly yet)
         if bl!=0:
             blocks.append((bl*256)+levelSub[bCounter])
         bCounter+=1
+
+    #Converting to set to see which blocks to load
     setBlock = set(blocks)
     for i in setBlock:
         try:
@@ -763,11 +769,11 @@ def getDist(ix,iy,dx,dy):
 def moveCamera(mousex,mousey,rxy=0):
     global camerax,cameray,diffcx,diffcy,ke
     if (4*WID/10)<mousex<(6*WID/10):
-        camx = WID/2
+        camx = (WID/2+mousex)/2
     else:
         camx = mousex
     if (4*HEI/10)<mousey<(6*HEI/10):
-        camy = HEI/2
+        camy = (HEI/2+mousey)/2
     else:
         camy = mousey
     
@@ -777,7 +783,7 @@ def moveCamera(mousex,mousey,rxy=0):
     remcx = camerax
     remcy = cameray
     camerax += (tx-camerax)*0.0575*(60/targetFps)+random.uniform(-rxy,rxy)
-    cameray += (ty-cameray)*0.125*(60/targetFps)+random.uniform(-rxy,rxy)+(-15 if ke[pg.K_w] else 15 if ke[pg.K_s] else 0)
+    cameray += (ty-cameray)*0.125*(60/targetFps)+random.uniform(-rxy,rxy)+(-16 if ke[pg.K_w] else 16 if ke[pg.K_s] else 0)
     diffcx = (-math.sqrt(abs(camerax-remcx)) if camerax-remcx<0 else math.sqrt(camerax-remcx))
     diffcy = (-math.sqrt(abs(cameray-remcy)) if cameray-remcy<0 else math.sqrt(cameray-remcy))
 
@@ -903,13 +909,13 @@ currentText = []
 redrawHearts=True
 resumeTimer = 0
 
-boxWidth = 0
+boxWidth = 0 #text box width (0 is invisible)
 targetFps = 60
 avgFps = 60
-health = [heart.Heart(1,4),heart.Heart(1,4)]
+health = [heart.Heart(1,4),heart.Heart(1,4)] #Two full red hearts
+counter = 0 #frame counter
 
-counter = 0
-
+#Loading & Scaling kunai image
 kunaiImg = pg.image.load(os.path.join(gamePath,"Images","UI","kunai.png"))
 kunaiImg = pg.transform.rotate(kunaiImg,-4.289)
 kunaiImg = pg.transform.smoothscale_by(kunaiImg,0.15)
@@ -1063,6 +1069,10 @@ while running:
             y-=(y%32)
             bl = level[i]
             blSub = levelSub[i]
+            if bl==5 and blSub==0: #spawnpoint
+                pl.xpos = x
+                pl.ypos = y
+                level[i] = 0
             if bl==0 or bl==6 or bl==11 or bl==5:
                 pass
             else:
@@ -1155,8 +1165,8 @@ while running:
         for i in range(0,20):
             pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (220-(pl.energy*6),40+(pl.energy*6),40) if pl.energy<30 else (40,300-pl.energy,-400+(pl.energy*6)) if pl.energy>80 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
     
-    #Disclaimer
-    tsurface = smallfont.render(str(buildID),True,(230,230,230))
+    #BuildId
+    tsurface = smallfont.render(str(buildId),True,(230,230,230))
     HUD.blit(tsurface,(10,HEI-16))
     
     #Debug Stats

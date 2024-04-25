@@ -8,7 +8,7 @@ from pygame import gfxdraw
 path = os.getcwd()
 
 #Game build associated with lvl generator
-buildId = 'id42424.1'
+buildId = 'id145.1'
 
 def saveARL(ls,ls2,dest):
     bitO = []
@@ -117,13 +117,7 @@ def loadARL(filename):
         except:
             pass
 
-        
-
-
-        
-    
-
-
+#Setup
 pg.init()
 WID = 1920
 HEI = 1017
@@ -133,24 +127,31 @@ running = True
 fps = pg.time.Clock()
 font = pg.font.SysFont('Comic Sans MS',16)
 
-camerax = 0
-cameray = 0
-cpBuff = [0,0]
-
-
-
+#Initial stuff
 lvlWid = 100
 lvlHei = 100
 lvlNum = 1
 saveTo = 'lvl1.arl'
+camerax = 0
+cameray = 0
+cpBuff = [0,0]
 
+#Loading description file
+f = open(os.path.join(path,"Levels",'lvldesc.txt'),'r')
+des = f.readlines()
+f.close()
+#Parsing this info
+desc = {}
+for line in des:
+    l = line.split('\\')
+    desc.update({l[0]:l[1]})
 
 
 level = [0] * (lvlWid*lvlHei)
 levelSub = [0] * (lvlWid*lvlHei)
 
 
-
+#Main Loop
 while running:
     mx,my = pg.mouse.get_pos()
     WID,HEI = pg.display.get_surface().get_size()
@@ -162,14 +163,24 @@ while running:
     screen.fill((8,8,8))
 
     ke = pg.key.get_pressed()
-    if ke[pg.K_RIGHT]:
-        camerax+=20
-    if ke[pg.K_LEFT]:
-        camerax-=20
-    if ke[pg.K_UP]:
-        cameray-=20
-    if ke[pg.K_DOWN]:
-        cameray+=20
+    if ke[pg.K_LSHIFT]: #2x Speed Scroll
+        if ke[pg.K_RIGHT]:
+            camerax+=32
+        if ke[pg.K_LEFT]:
+            camerax-=32
+        if ke[pg.K_UP]:
+            cameray-=32
+        if ke[pg.K_DOWN]:
+            cameray+=32
+    else:
+        if ke[pg.K_RIGHT]:
+            camerax+=16
+        if ke[pg.K_LEFT]:
+            camerax-=16
+        if ke[pg.K_UP]:
+            cameray-=16
+        if ke[pg.K_DOWN]:
+            cameray+=16
     if ke[pg.K_s]:
         saveARL(level,levelSub,saveTo)
         screen.fill((0,50,0))
@@ -198,9 +209,9 @@ while running:
                     screen.blit(loadedTiles[level[c]*256+levelSub[c]],(x-camerax,y-cameray))
                 except:
                     pg.draw.rect(screen,(64,64,64),pg.Rect(x-camerax,y-cameray,32,32))
-            tsurface = font.render(str(level[c]),True,(180,180,180))
+            tsurface = font.render(str(level[c]),True,(180,180,180) if level[c]!=0 else (40,40,40))
             screen.blit(tsurface,(x-camerax+1,y-cameray+0))
-            tsurface = font.render(str(levelSub[c]),True,(180,180,180))
+            tsurface = font.render(str(levelSub[c]),True,(180,180,180) if levelSub[c]!=0 and level[c]!=0 else (40,40,40))
             screen.blit(tsurface,(x-camerax+1,y-cameray+12))
 
             c+=1
@@ -208,6 +219,8 @@ while running:
         y+=32
         
 #SX and SY are the x and y positions of the selected block, SC is its position in the list
+#Holding control allows you to change the subtype instead of normal type
+#Clamps at 255 and 0
     if not ke[pg.K_LCTRL]:
         level[sc]+=scrollDir
         if level[sc]==-1:
@@ -240,12 +253,21 @@ while running:
         levelSub[sc] = 0
         copied = True
 
-#Draw graphics onto the screen
+#Draw details of the block you're hovering over
     pg.draw.rect(screen,(255,0,0) if copied else (0,255,0) if pasted else (0,0,255) if softPaste else (255,255,255),pg.Rect(sx*32-camerax,sy*32-cameray,32,32))
     tsurface = font.render(str(level[sc]),True,(0,0,0))
     screen.blit(tsurface,((sx*32)-camerax+1,(sy*32)-cameray+0))
     tsurface = font.render(str(levelSub[sc]),True,(0,0,0))
     screen.blit(tsurface,((sx*32)-camerax+1,(sy*32)-cameray+12))
+
+    #Get descriptions (format request first)
+    ts = str(level[sc]) + '-' + str(levelSub[sc])
+    tsurface = font.render(str(desc.get(ts)),True,(200,0,0))
+    screen.blit(tsurface,((sx*32+80)-camerax+1,(sy*32-16)-cameray+12))
+
+    #draw buildId
+    tsurface = font.render(str(buildId),True,(230,230,230))
+    screen.blit(tsurface,(5,5))
 
     f = fps.tick(60)
     pg.display.flip()
