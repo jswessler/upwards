@@ -1,11 +1,11 @@
 # upwards
 
-A pygame platformer by jswessler
+A pygame platformer by jswessler.
 Requires: pygame > 2.3, numpy
 
-id146.1 (planned)
-* Significantly reduced lag in level generator (by only drawing the part of the screen you're looking at)
+id146.1
 * Changed hex art
+- Slightly adjusted some physics
 
 id145.4p
 * Github is now public

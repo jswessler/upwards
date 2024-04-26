@@ -12,7 +12,7 @@ import heart
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id145.4p" #Build Identifier
+buildId = "id146.1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -1121,9 +1121,9 @@ while running:
     #Draw Hearts & Hex
     if counter%600==0:
         hexImg = pg.image.load(os.path.join(gamePath,"Images","UI","hex.png"))
-        hexImg = pg.transform.smoothscale_by(hexImg,0.1)
+        hexImg = pg.transform.smoothscale_by(hexImg,0.25)
 
-    HUD.blit(hexImg,(10,HEI-160))
+    HUD.blit(hexImg,(10,HEI-210))
 
     c=0
     for hp in health:
@@ -1135,7 +1135,7 @@ while running:
             hp.img = pg.transform.scale_by(hp.img,4)
             hp.img = pg.transform.rotate(hp.img,4.289)
         try:
-            HUD.blit(hp.img,(150+(68*c),HEI-80-(c*5.1)))
+            HUD.blit(hp.img,(180+(68*c),HEI-77-(c*5.1)))
         except:
             pass
         c+=1
@@ -1152,7 +1152,7 @@ while running:
     
     #BuildId
     tsurface = smallfont.render(str(buildId),True,(230,230,230))
-    HUD.blit(tsurface,(10,HEI-16))
+    HUD.blit(pg.transform.rotate(tsurface,-55),(15,HEI-62))
     
     #Debug Stats
     if ke[pg.K_r]:
