@@ -3,6 +3,15 @@
 A pygame platformer by jswessler.
 Requires: pygame > 2.3, numpy
 
+Release Log:
+
+id147.1 (planned)
+- Temp fix for doublejump animations bouncing around a lot
+
+id146.2
+- Clicking on phone no longer spams pause/unpause
+- You can now pause with ESC
+
 id146.1
 * Changed hex art
 - Slightly adjusted some physics
@@ -12,10 +21,10 @@ id145.4p
 - Slightly reduced width of floor collision (to not interfere with the wall collision)
 - Cleaned up wall riding physics, extended right-side hitbox to better align with animiations
 - Removed extraneous dive behavior
-- Half/Quarter Blue hearts now heal properly
+- Half/Quarter Blue hearts now apply properly
 
 id145.3
-- Made spawnpoints work properly
+- Made spawnpoints work no matter where they are in the map
 
 id145.2
 - Made floor collision cover more of your body, which should eliminate getting stuck halfway in walls

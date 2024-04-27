@@ -12,7 +12,7 @@ import heart
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id146.1" #Build Identifier
+buildId = "id146.2" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -883,10 +883,8 @@ loadARL(loadFrom)
 pl = Player(spawn)
 se = Sensor(pl)
 
-
-camerax = 0
-cameray = 0
-
+#Variable Setup
+camerax = cameray = 0
 triggerPhone = False
 phoneCounter = 0
 nextCall = 0
@@ -894,10 +892,9 @@ waitCounter = 2
 phoneX = 0
 phoneY = 0
 currentText = []
-
+mouseUIInteract = False
 redrawHearts=True
 resumeTimer = 0
-
 boxWidth = 0 #text box width (0 is invisible)
 targetFps = 60
 avgFps = 60
@@ -908,7 +905,6 @@ counter = 0 #frame counter
 kunaiImg = pg.image.load(os.path.join(gamePath,"Images","UI","kunai.png"))
 kunaiImg = pg.transform.rotate(kunaiImg,-4.289)
 kunaiImg = pg.transform.smoothscale_by(kunaiImg,0.15)
-
 
 #Main Game Loop
 while running:
@@ -926,9 +922,9 @@ while running:
 
     #Only if the physics are running
     if state=='game':
-        pl.update(ke)
-        tileProperties(counter%60)
-        moveCamera(mousex,mousey,max(0,(pl.yv-2.5)))
+        pl.update(ke) #Do Physics
+        tileProperties(counter%60) #Update Tiles
+        moveCamera(mousex,mousey,max(0,(pl.yv-2.5))) #Handle Camera Movement
     elif state=='phonecall' and boxWidth>width:
         moveCamera(mousex,mousey)
         if line>-1:
@@ -946,251 +942,254 @@ while running:
         if resumeTimer<=0:
             state = 'game'
 
-    
-
-
-    #Handle Phone Calls
-    if nextCall>=1:
-        boxRect = pg.Rect(50,HEI-300,boxWidth,250)
-        nameRect = pg.Rect(50,HEI-400,min(150,boxWidth),75)
-        pg.draw.rect(boxLayer,(0,0,0),boxRect,0,25)
-        pg.draw.rect(boxLayer,(230,230,230),boxRect,5,25)
-        pg.draw.rect(boxLayer,(0,0,0),nameRect,0,25)
-        pg.draw.rect(boxLayer,(230,230,230),nameRect,5,25)
-        state = 'phonecall'
-        if boxWidth<WID-100:
-            boxWidth+=64
-            lineCounter = 0
-            charCounter = 0
-            line = -1
-            txt = []
-            textName = ''
-            currentText = ['','','']
-        else:
-            boxWidth=WID-100
-            if txt==[]:
-                f = open(os.path.join(gamePath,"Phone Calls", str(int(nextCall)) + ".txt"),'r')
-                txt = f.read()
-            
-            if waitCounter <= 0:
-                if ke[pg.K_x] or ke[pg.K_TAB]:
-                    waitCounter = 0
-                else:
-                    waitCounter = random.randint(0,1)
-                if charCounter < len(txt):
-                    i=txt[charCounter] #Important
-                    if line == -1:
-                        textName += i
-                        if i=='\n':
-                            line = 0
-                        charCounter += 1
+    #In-Game Loop
+    if state == 'game' or state == 'resuming' or state == 'pause' or state == 'phonecall':
+        #Handle Phone Calls
+        if nextCall>=1:
+            boxRect = pg.Rect(50,HEI-300,boxWidth,250)
+            nameRect = pg.Rect(50,HEI-400,min(150,boxWidth),75)
+            pg.draw.rect(boxLayer,(0,0,0),boxRect,0,25)
+            pg.draw.rect(boxLayer,(230,230,230),boxRect,5,25)
+            pg.draw.rect(boxLayer,(0,0,0),nameRect,0,25)
+            pg.draw.rect(boxLayer,(230,230,230),nameRect,5,25)
+            state = 'phonecall'
+            if boxWidth<WID-100:
+                boxWidth+=64
+                lineCounter = 0
+                charCounter = 0
+                line = -1
+                txt = []
+                textName = ''
+                currentText = ['','','']
+            else:
+                boxWidth=WID-100
+                if txt==[]:
+                    f = open(os.path.join(gamePath,"Phone Calls", str(int(nextCall)) + ".txt"),'r')
+                    txt = f.read()
+                
+                if waitCounter <= 0:
+                    if ke[pg.K_x] or ke[pg.K_TAB]:
+                        waitCounter = 0
                     else:
-                        if i!='\\':
-                            currentText[line]+=i
-                            charCounter+=1
+                        waitCounter = random.randint(0,1)
+                    if charCounter < len(txt):
+                        i=txt[charCounter] #Important
+                        if line == -1:
+                            textName += i
+                            if i=='\n':
+                                line = 0
+                            charCounter += 1
                         else:
-                            j = txt[charCounter+1]
-                            if j=='.':
-                                waitCounter = 15
-                                charCounter += 2
-                            elif j==',':
-                                waitCounter = 25
-                                charCounter += 2
-                            elif j=='|':
-                                waitCounter = 60
-                                charCounter += 2
-                            elif j=='t':
-                                charCounter += 2
-                                line+=1
-                            elif j=='n':
-                                if ke[pg.K_RETURN] or ke[pg.K_z]:
-                                    currentText = ['','','']
-                                    line = -1
+                            if i!='\\':
+                                currentText[line]+=i
+                                charCounter+=1
+                            else:
+                                j = txt[charCounter+1]
+                                if j=='.':
+                                    waitCounter = 15
                                     charCounter += 2
+                                elif j==',':
+                                    waitCounter = 25
+                                    charCounter += 2
+                                elif j=='|':
+                                    waitCounter = 60
+                                    charCounter += 2
+                                elif j=='t':
+                                    charCounter += 2
+                                    line+=1
+                                elif j=='n':
+                                    if ke[pg.K_RETURN] or ke[pg.K_z]:
+                                        currentText = ['','','']
+                                        line = -1
+                                        charCounter += 2
 
-                else:
-                    if ke[pg.K_RETURN] or ke[pg.K_z]:
-                        currentText = ['','','']
-                        nextCall = 0
-                        boxWidth = 0
-                        state = 'game'
-            else:
-                waitCounter-=1*(240/targetFps)
-            
-            
-    #Draw Player
-    if pl.img!='':
-        screen.blit(pl.img,((pl.xpos-camerax+pl.imgPos[0])*gameScale,(pl.ypos-cameray+pl.imgPos[1])*gameScale))
-
-    #Draw Kunais & do Kunai physics
-    for kunai in spawnedKunai:
-        kunai.update()
-        screen.blit(kunai.image,((kunai.xpos-camerax)*gameScale,(kunai.ypos-cameray)*gameScale))
-    
-    #Draw HUD Kunais
-    for i in range(0,kunais):
-        kunaiImg.set_alpha(255)
-        if i == 0:
-            if 0<=kuAni<=14:
-                kunaiImg.set_alpha(255-(kuAni*15))
-                HUD.blit(kunaiImg,(WID-100-(i*38)+kuAni,HEI-150-(i*3)-(kuAni*kuAni+kuAni)))
-            elif kuAni >= 39 or kuAni == -1:
-                HUD.blit(kunaiImg,(WID-100-(i*38),HEI-150-(i*3)))
-        else:   
-            if 24<=kuAni<=40:
-                HUD.blit(kunaiImg,(WID-152-(i*38)+(kuAni*2.3),HEI-154-(i*3)+(kuAni/5)))
-            else:
-                HUD.blit(kunaiImg,(WID-100-(i*38),HEI-150-(i*3)))
-
-
-    if kuAni!=-1:
-        kuAni+=1
-    if kuAni >= 40:
-        kuAni = -1
-
-    #Draw Blocks
-    re=0
-    for x in range(max(0,int(camerax-24)),min(width*32,int((camerax+WID+24))),32):
-        for y in range(max(0,int(cameray-24)),min(height*32,int((cameray+HEI+24))),32):
-            re+=1
-            i = int(y/32)*width+int(x/32)
-            x-=(x%32)
-            y-=(y%32)
-            bl = level[i]
-            blSub = levelSub[i]
-            if bl==0 or bl==6 or bl==11 or bl==5:
-                pass
-            else:
-                try:
-                    if bl==7 or bl==8 or bl==9 or bl==10:
-                        screen.blit(pg.transform.scale_by(loadedTiles[bl*256+blSub],2), ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
                     else:
-                        screen.blit(loadedTiles[bl*256+blSub], ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-                except:
-                    pass
-            if ke[pg.K_t]:
-                tsurface = smallfont.render(str(bl),True,(255,0,0) if bl!=0 else (180,180,180))
-                screen.blit(tsurface, ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-                tsurface = smallfont.render(str(blSub),True,(255,0,0) if blSub!=0 else (180,180,180))
-                screen.blit(tsurface, ((x-camerax)*gameScale,(y+12-cameray)*gameScale,32*gameScale,32*gameScale))
+                        if ke[pg.K_RETURN] or ke[pg.K_z]:
+                            currentText = ['','','']
+                            nextCall = 0
+                            boxWidth = 0
+                            state = 'game'
+                else:
+                    waitCounter-=1*(240/targetFps)
+                
+                
+        #Draw Player
+        if pl.img!='':
+            screen.blit(pl.img,((pl.xpos-camerax+pl.imgPos[0])*gameScale,(pl.ypos-cameray+pl.imgPos[1])*gameScale))
 
-                    
-    #Draw Phone
-    if triggerPhone:
-        phoneCounter+=1
-        if counter%2==0:
-            phoneImg = pg.image.load(os.path.join(gamePath,"Images","Phone","phone" + str(1+int((counter%6)/2)) + ".png"))
-            phoneImg = pg.transform.scale_by(phoneImg,max(2,min(4,7-phoneCounter/10)))
-        if phoneCounter>380*(idealFps/60):
-            triggerPhone=False
-        elif phoneCounter>360*(idealFps/60):
-            phoneX += (WID-20-phoneX)*0.125*(60/targetFps)
-            phoneY += (30-phoneY)*0.125*(60/targetFps)
-        elif phoneCounter>30*(idealFps/60):
-            phoneX += (pl.xpos-camerax-phoneX-13)*0.2*(60/targetFps)+random.uniform(-2,2)
-            phoneY += (pl.ypos-cameray-phoneY-170)*0.2*(60/targetFps)+random.uniform(-2,2)
+        #Draw Kunais & do Kunai physics
+        for kunai in spawnedKunai:
+            kunai.update()
+            screen.blit(kunai.image,((kunai.xpos-camerax)*gameScale,(kunai.ypos-cameray)*gameScale))
+        
+        #Draw HUD Kunais
+        for i in range(0,kunais):
+            kunaiImg.set_alpha(255)
+            if i == 0:
+                if 0<=kuAni<=14:
+                    kunaiImg.set_alpha(255-(kuAni*15))
+                    HUD.blit(kunaiImg,(WID-100-(i*38)+kuAni,HEI-150-(i*3)-(kuAni*kuAni+kuAni)))
+                elif kuAni >= 39 or kuAni == -1:
+                    HUD.blit(kunaiImg,(WID-100-(i*38),HEI-150-(i*3)))
+            else:   
+                if 24<=kuAni<=40:
+                    HUD.blit(kunaiImg,(WID-152-(i*38)+(kuAni*2.3),HEI-154-(i*3)+(kuAni/5)))
+                else:
+                    HUD.blit(kunaiImg,(WID-100-(i*38),HEI-150-(i*3)))
+
+
+        if kuAni!=-1:
+            kuAni+=1
+        if kuAni >= 40:
+            kuAni = -1
+
+        #Draw Blocks
+        re=0
+        for x in range(max(0,int(camerax-24)),min(width*32,int((camerax+WID+24))),32):
+            for y in range(max(0,int(cameray-24)),min(height*32,int((cameray+HEI+24))),32):
+                re+=1
+                i = int(y/32)*width+int(x/32)
+                x-=(x%32)
+                y-=(y%32)
+                bl = level[i]
+                blSub = levelSub[i]
+                if bl==0 or bl==6 or bl==11 or bl==5:
+                    pass
+                else:
+                    try:
+                        if bl==7 or bl==8 or bl==9 or bl==10:
+                            screen.blit(pg.transform.scale_by(loadedTiles[bl*256+blSub],2), ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+                        else:
+                            screen.blit(loadedTiles[bl*256+blSub], ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+                    except:
+                        pass
+                if ke[pg.K_t]:
+                    tsurface = smallfont.render(str(bl),True,(255,0,0) if bl!=0 else (180,180,180))
+                    screen.blit(tsurface, ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
+                    tsurface = smallfont.render(str(blSub),True,(255,0,0) if blSub!=0 else (180,180,180))
+                    screen.blit(tsurface, ((x-camerax)*gameScale,(y+12-cameray)*gameScale,32*gameScale,32*gameScale))
+
+                        
+        #Draw Phone
+        if triggerPhone:
+            phoneCounter+=1
+            if counter%2==0:
+                phoneImg = pg.image.load(os.path.join(gamePath,"Images","Phone","phone" + str(1+int((counter%6)/2)) + ".png"))
+                phoneImg = pg.transform.scale_by(phoneImg,max(2,min(4,7-phoneCounter/10)))
+            if phoneCounter>380*(idealFps/60):
+                triggerPhone=False
+            elif phoneCounter>360*(idealFps/60):
+                phoneX += (WID-20-phoneX)*0.125*(60/targetFps)
+                phoneY += (30-phoneY)*0.125*(60/targetFps)
+            elif phoneCounter>30*(idealFps/60):
+                phoneX += (pl.xpos-camerax-phoneX-13)*0.2*(60/targetFps)+random.uniform(-2,2)
+                phoneY += (pl.ypos-cameray-phoneY-170)*0.2*(60/targetFps)+random.uniform(-2,2)
+            else:
+                phoneX=WID-80
+                phoneY=15
+            phoneRect = pg.Rect(phoneX,phoneY,30,50)
+            if phoneRect.collidepoint(pg.mouse.get_pos()) and pg.mouse.get_pressed()[0]:
+                pg.draw.rect(screen, (230,20,20), phoneRect)
+                triggerPhone=False
+                nextCall*=1000
+
+            HUD.blit(phoneImg,(phoneX,phoneY))
         else:
+
+            if counter%60==0 or phoneCounter!=0:
+                phoneImg = pg.image.load(os.path.join(gamePath,"Images","Phone","normal1.png"))
+                phoneImg = pg.transform.scale_by(phoneImg,4)
+                phoneRect = pg.Rect(WID-80,15,60,100)
+            if ((phoneRect.collidepoint(pg.mouse.get_pos()) and pg.mouse.get_pressed()[0]) or ke[pg.K_ESCAPE]) and not mouseUIInteract:
+                mouseUIInteract = True
+                if state!='pause':
+                    state = 'pause'   
+                else:
+                    state = 'resuming'
+                    resumeTimer = 15
+            phoneCounter=0
+            HUD.blit(phoneImg,(WID-80,15))
             phoneX=WID-80
             phoneY=15
-        phoneRect = pg.Rect(phoneX,phoneY,30,50)
-        if phoneRect.collidepoint(pg.mouse.get_pos()) and pg.mouse.get_pressed()[0]:
-            pg.draw.rect(screen, (230,20,20), phoneRect)
-            triggerPhone=False
-            nextCall*=1000
-
-        HUD.blit(phoneImg,(phoneX,phoneY))
-    else:
-
-        if counter%60==0 or phoneCounter!=0:
-            phoneImg = pg.image.load(os.path.join(gamePath,"Images","Phone","normal1.png"))
-            phoneImg = pg.transform.scale_by(phoneImg,4)
-            phoneRect = pg.Rect(WID-80,15,60,100)
-        if phoneRect.collidepoint(pg.mouse.get_pos()) and pg.mouse.get_pressed()[0]:
-            if state!='pause':
-                state = 'pause'
-            else:
-                state = 'resuming'
-                resumeTimer = 30
-        phoneCounter=0
-        HUD.blit(phoneImg,(WID-80,15))
-        phoneX=WID-80
-        phoneY=15
+            #Fix for spamclicking
+            if mouseUIInteract and not pg.mouse.get_pressed()[0] and not ke[pg.K_ESCAPE]:
+                mouseUIInteract = False
 
 
 
-    #Draw Hearts & Hex
-    if counter%600==0:
-        hexImg = pg.image.load(os.path.join(gamePath,"Images","UI","hex.png"))
-        hexImg = pg.transform.smoothscale_by(hexImg,0.25)
+        #Draw Hearts & Hex
+        if counter%600==0:
+            hexImg = pg.image.load(os.path.join(gamePath,"Images","UI","hex.png"))
+            hexImg = pg.transform.smoothscale_by(hexImg,0.25)
 
-    HUD.blit(hexImg,(10,HEI-210))
+        HUD.blit(hexImg,(10,HEI-210))
 
-    c=0
-    for hp in health:
-        if redrawHearts:
+        c=0
+        for hp in health:
+            if redrawHearts:
+                try:
+                    hp.setImg(pg.image.load(os.path.join(gamePath,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png")))
+                except:
+                    health.pop(health.index(hp))
+                hp.img = pg.transform.scale_by(hp.img,4)
+                hp.img = pg.transform.rotate(hp.img,4.289)
             try:
-                hp.setImg(pg.image.load(os.path.join(gamePath,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png")))
+                HUD.blit(hp.img,(180+(68*c),HEI-77-(c*5.1)))
             except:
-                health.pop(health.index(hp))
-            hp.img = pg.transform.scale_by(hp.img,4)
-            hp.img = pg.transform.rotate(hp.img,4.289)
-        try:
-            HUD.blit(hp.img,(180+(68*c),HEI-77-(c*5.1)))
-        except:
-            pass
-        c+=1
-    redrawHearts=False
+                pass
+            c+=1
+        redrawHearts=False
 
 
-    
-    #HUD
+        
+        #HUD
 
-    #Energy Bar
-    for j in range(0,10):
-        for i in range(0,20):
-            pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (220-(pl.energy*6),40+(pl.energy*6),40) if pl.energy<30 else (40,300-pl.energy,-400+(pl.energy*6)) if pl.energy>80 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
-    
-    #BuildId
-    tsurface = smallfont.render(str(buildId),True,(230,230,230))
-    HUD.blit(pg.transform.rotate(tsurface,-55),(15,HEI-62))
-    
-    #Debug Stats
-    if ke[pg.K_r]:
-        tsurface = smallfont.render(str(pl.xv),True,(230,230,230))
-        HUD.blit(tsurface,(10,HEI-250))
-        tsurface = smallfont.render(str(pl.yv),True,(230,230,230))
-        HUD.blit(tsurface,(10,HEI-265))
-        tsurface = smallfont.render(str(pl.maxSpd),True,(230,230,230))
-        HUD.blit(tsurface,(10,HEI-280))
-        avgFps = sum(fList)/len(fList)
-        tsurface = smallfont.render(str(round(avgFps,2)) + " fps",True,(230,230,230))
-        HUD.blit(tsurface,(10,HEI-295))
-        tsurface = smallfont.render(str(round(1000/f,2)) + " fps",True,(230,230,230))
-        HUD.blit(tsurface,(10,HEI-310))
-        #Draw a center box (only on R press as of id versions)
-        if (4*HEI/10)<mousey<(6*HEI/10) and (4*WID/10)<mousex<(6*WID/10):
-            pg.draw.rect(screen,(60,60,60),pg.Rect(4*WID/10,4*HEI/10,WID/5,HEI/5),3)
+        #Energy Bar
+        for j in range(0,10):
+            for i in range(0,20):
+                pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (220-(pl.energy*6),40+(pl.energy*6),40) if pl.energy<30 else (40,300-pl.energy,-400+(pl.energy*6)) if pl.energy>80 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
+        
+        #BuildId
+        tsurface = smallfont.render(str(buildId),True,(230,230,230))
+        HUD.blit(pg.transform.rotate(tsurface,-55),(15,HEI-62))
+        
+        #Debug Stats
+        if ke[pg.K_r]:
+            tsurface = smallfont.render(str(pl.xv),True,(230,230,230))
+            HUD.blit(tsurface,(10,HEI-250))
+            tsurface = smallfont.render(str(pl.yv),True,(230,230,230))
+            HUD.blit(tsurface,(10,HEI-265))
+            tsurface = smallfont.render(str(pl.maxSpd),True,(230,230,230))
+            HUD.blit(tsurface,(10,HEI-280))
+            avgFps = sum(fList)/len(fList)
+            tsurface = smallfont.render(str(round(avgFps,2)) + " fps",True,(230,230,230))
+            HUD.blit(tsurface,(10,HEI-295))
+            tsurface = smallfont.render(str(round(1000/f,2)) + " fps",True,(230,230,230))
+            HUD.blit(tsurface,(10,HEI-310))
+            #Draw a center box (only on R press as of id versions)
+            if (4*HEI/10)<mousey<(6*HEI/10) and (4*WID/10)<mousex<(6*WID/10):
+                pg.draw.rect(screen,(60,60,60),pg.Rect(4*WID/10,4*HEI/10,WID/5,HEI/5),3)
 
 
-    targetFps=min(idealFps,avgFps)
-    threeDee=False
-    #Rendering 3D Hud
-    if threeDee:
-        if counter%1==0:
-            dst = np.float32([[0,0],[WID,0],[HEI,0],[WID,HEI]])
-            w, h = HUD.get_size()
-            pts = np.float32([[(-pl.yv/4-diffcy)*2,(-pl.xv/4-diffcx)*2],[WID+((pl.yv/4+diffcy)*4),(pl.xv/4+diffcx)*2],[WID-((pl.yv/4+diffcy)*4),HEI-((pl.xv/4+diffcx)*4)],[(pl.yv/4+diffcy)*2,HEI+((pl.xv/4+diffcx)*4)]])
-            src_corners = np.float32([(0, 0), (0, w), (h, w), (h, 0)])
-            mat = cv2.getPerspectiveTransform(src_corners, np.float32([(p[1],p[0]) for p in pts]))
-            buf_rgb = pg.surfarray.array3d(HUD)
-            out_rgb = cv2.warpPerspective(buf_rgb, mat, (HEI,WID), flags=cv2.INTER_LINEAR)
-            out = pg.Surface(out_rgb.shape[0:2], pg.SRCALPHA)
-            pg.surfarray.blit_array(out, out_rgb)
-        screen.blit(out,(0,max(0,-pl.yv*6)),None,1)
-    else:
-        screen.blit(HUD,((-diffcx*4,max(0,-pl.yv*6))))
-    screen.blit(boxLayer,(0,0))
-    screen.blit(text,(0,0))
+        targetFps=min(idealFps,avgFps)
+        threeDee=False
+        #Rendering 3D Hud
+        if threeDee:
+            if counter%1==0:
+                dst = np.float32([[0,0],[WID,0],[HEI,0],[WID,HEI]])
+                w, h = HUD.get_size()
+                pts = np.float32([[(-pl.yv/4-diffcy)*2,(-pl.xv/4-diffcx)*2],[WID+((pl.yv/4+diffcy)*4),(pl.xv/4+diffcx)*2],[WID-((pl.yv/4+diffcy)*4),HEI-((pl.xv/4+diffcx)*4)],[(pl.yv/4+diffcy)*2,HEI+((pl.xv/4+diffcx)*4)]])
+                src_corners = np.float32([(0, 0), (0, w), (h, w), (h, 0)])
+                mat = cv2.getPerspectiveTransform(src_corners, np.float32([(p[1],p[0]) for p in pts]))
+                buf_rgb = pg.surfarray.array3d(HUD)
+                out_rgb = cv2.warpPerspective(buf_rgb, mat, (HEI,WID), flags=cv2.INTER_LINEAR)
+                out = pg.Surface(out_rgb.shape[0:2], pg.SRCALPHA)
+                pg.surfarray.blit_array(out, out_rgb)
+            screen.blit(out,(0,max(0,-pl.yv*6)),None,1)
+        else:
+            screen.blit(HUD,((-diffcx*4,max(0,-pl.yv*6))))
+        screen.blit(boxLayer,(0,0))
+        screen.blit(text,(0,0))
 
 
     #End time, processing FPS
