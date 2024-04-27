@@ -8,7 +8,7 @@ from pygame import gfxdraw
 path = os.getcwd()
 
 #Game build associated with level generator
-buildId = 'id146.2'
+buildId = 'id147.1'
 
 def saveARL(ls,ls2,dest):
     bitO = []

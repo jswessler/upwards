@@ -5,8 +5,12 @@ Requires: pygame > 2.3, numpy
 
 Release Log:
 
-id147.1 (planned)
-- Temp fix for doublejump animations bouncing around a lot
+id147.1
+- Jump animations no longer bounce around a ton
+- Jump animations when facing left also bounce around less
+- Adjusted silver hearts (90% reduced flat energy gain, but each full heart gives you about 3% reduced gravity and slightly better air movement)
+- Holding W now improves your platforming very slightly again
+
 
 id146.2
 - Clicking on phone no longer spams pause/unpause

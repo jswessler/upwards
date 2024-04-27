@@ -12,7 +12,7 @@ import heart
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id146.2" #Build Identifier
+buildId = "id147.1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -157,7 +157,7 @@ class Player(pg.sprite.Sprite):
                 self.img = pg.transform.scale_by(self.img,2)
                 if self.dFacing==-1:
                     self.img = pg.transform.flip(self.img,True,False)
-                self.imgPos = [-26,-102]
+                self.imgPos = [-31,-102]
             #Air Transitions
 
             elif self.yv>-0.5 and (self.nextAni=='high' or self.nextAni=='low') and not self.onGround: #If we have a queued animation
@@ -174,7 +174,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-26,-100]
+                    self.imgPos = [-31,-100]
                 
                 #Mid Transition after double jump
                 elif self.nextAni=='mid':
@@ -185,7 +185,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-26,-100]
+                    self.imgPos = [-31,-100]
 
                 #Low transition after hover or dive jump
                 elif self.nextAni=='low':
@@ -196,7 +196,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-26,-100]
+                    self.imgPos = [-31,-100]
             else:
             
             #Air Animations ------
@@ -217,7 +217,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-76,-116]
+                    self.imgPos = [-84,-101]
                 
                 #Djump transition (when moving up)
                 elif self.animation=='djumpup':
@@ -233,7 +233,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-30,-112]
+                    self.imgPos = [-32,-125]
                 
                 #Djump transition (when moving down)
                 elif self.animation=='djumpdown':
@@ -249,7 +249,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-26,-96]
+                    self.imgPos = [-31,-104]
                     
                 #First Jump (2 frame animation on mod%30 that plays as long as you're moving up)
                 elif self.animation=='jump':
@@ -262,7 +262,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-26,-100]
+                    self.imgPos = [-31,-100]
                 
 
 
@@ -283,7 +283,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-26,-116]
+                    self.imgPos = [-31,-116]
 
                 elif self.nextAni=='fftrans':
                     if self.aniTimer<0:
@@ -292,7 +292,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-26,-116]
+                    self.imgPos = [-31,-116]
 
                 #Falling
                 elif self.animation=='falling':
@@ -309,7 +309,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.transform.scale_by(self.img,2)
                     if self.dFacing==-1:
                         self.img = pg.transform.flip(self.img,True,False)
-                    self.imgPos = [-26,-116]
+                    self.imgPos = [-31,-116]
 
     #Run Every Frame
     def update(self,keys):
@@ -342,9 +342,11 @@ class Player(pg.sprite.Sprite):
             else:
                 eRegen = max(0.005,0.0075 + (100-self.energy) / 250)
             for heart in health:
-                if heart.type == 3:
-                    eRegen*=1.1
-                    self.energy+=0.025
+                if heart.type == 3 and heart.amt == 2:
+                    eRegen*=1.125
+                    self.energy+=0.0025
+                    self.yv-=0.001
+                    self.xv+=0.001*self.facing
 
 
 
@@ -371,6 +373,7 @@ class Player(pg.sprite.Sprite):
                             dealDmg(1)
                         
                 self.onGround = True
+                #Slowdown if you landed hard
                 if self.animation=='hardlanded':
                     self.xv*=0.5
                 self.yv = 0
@@ -380,11 +383,11 @@ class Player(pg.sprite.Sprite):
                 self.abilities[2] = 4
                 self.abilities[3] = 2
                 self.abilities[4] = 2
-                self.energy+=eRegen+0.001
+                self.energy+=eRegen+0.0001
             else:
                 self.onGround = False
                 self.gravity = 1
-                self.energy+=(eRegen/50*(max(0,self.yv)))
+                self.energy+=(eRegen/40*(max(0,self.yv)))
                     
 
                 #Up detection (only run when not on ground)
@@ -414,13 +417,13 @@ class Player(pg.sprite.Sprite):
                 if self.abilities[0]>0:
                     self.jCounter=(12-(3*self.abilities[0]))
                     self.abilities[0]-=0.25
-                    self.yv-=(0.375+(0.0125*abs(self.xv)))
+                    self.yv-=0.35+(0.025*abs(self.xv))
                     self.animation = 'jump'
 
 
                 #Jump Extension
                 if not self.onGround and self.abilities[0]<=0 and self.abilities[1]>0 and self.energy>0.175:
-                    self.yv-=0.032
+                    self.yv-=0.0325
                     if self.abilities[1]<12.5:
                         self.energy-=0.175
                     self.abilities[1]-=0.25
@@ -439,9 +442,9 @@ class Player(pg.sprite.Sprite):
                 #Double Jump
                 if 0<self.abilities[2]<4 and not self.onGround and not self.wallClimb and self.abilities[0]<=0 and self.abilities[3]==2 and self.energy>0.8 and not self.wallClimb:
                     if self.yv>0:
-                        self.yv*=0.25
-                    self.yv-=0.325
-                    self.maxSpd = 2.8
+                        self.yv*=0.4
+                    self.yv-=(0.325+0.0125*abs(self.xv))
+                    self.maxSpd = 2.85
                     self.xv*=1.0125
                     self.abilities[2]-=0.25
                     self.energy-=0.8
@@ -463,7 +466,7 @@ class Player(pg.sprite.Sprite):
                     self.abilities[3]=0
                     self.energy-=1
                     self.jCounter=4
-
+                    #animation
                     self.animation = 'hover'
 
             #Logic when not pressing space    
@@ -488,7 +491,7 @@ class Player(pg.sprite.Sprite):
 
             #Wall slide 
                 if all(se.detect(self.facing*31,i,True)[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0:
-                    self.jCounter=6
+                    self.jCounter=2
                     self.wallClimb = True
 
                     #self.animation = 'wallslide'
@@ -497,7 +500,7 @@ class Player(pg.sprite.Sprite):
                 if self.wallClimb and self.energy>6 and (((keys[pg.K_a] or keys[pg.K_LEFT]) and self.onWall==1) or ((keys[pg.K_d] or keys[pg.K_RIGHT]) and self.onWall==-1) or (keys[pg.K_SPACE] or keys[pg.K_UP])):
                     self.yv*=0.25
                     self.yv-=3.75
-                    self.jCounter=16
+                    self.jCounter=20
                     self.xv = -self.facing*3
                     self.energy-=6
                     self.wallClimb = False
@@ -517,7 +520,7 @@ class Player(pg.sprite.Sprite):
                     self.abilities[2]=0
                     self.abilities[3]-=0.1
                     self.energy-=1
-                    self.maxSpd = 3.35
+                    self.maxSpd = 3.4
 
                     self.animation = 'jump' #change this when dive animation is implemented
             
@@ -576,6 +579,9 @@ class Player(pg.sprite.Sprite):
             #Forfeit floatiness with S or down arrow
             if keys[pg.K_s] or keys[pg.K_DOWN]:
                 self.jCounter=0
+            if keys[pg.K_w]:
+                self.yv-=0.001
+                self.energy-=0.01
 
             #Stop if you're going very slow & change animation
             self.yv+=self.gravity*0.03025
