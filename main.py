@@ -12,7 +12,7 @@ import heart
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id148.2" #Build Identifier
+buildId = "id148.2PT" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -287,7 +287,7 @@ class Player(pg.sprite.Sprite):
     def update(self,keys):
         global kunais
         self.counter+=60/targetFps
-        self.dt+=240/targetFps
+        self.dt = 1
 
         #Do collision detection using 8 points scattered around your model
         for i in range(-93,20,32):
@@ -298,289 +298,286 @@ class Player(pg.sprite.Sprite):
         #For complicated reasons physics targets 240fps.
         #If we're running below 240fps then we do multiple physics steps per drawn frame
         #We don't allow running above 240fps
-        dtr = targetFps/60
-        while self.dt>0:
-            #Reduce jump hover counter
-            if self.jCounter>0:
-                self.jCounter-=0.25
-            #Incrase energy if it ends up below 0 (somehow)
-            if self.energy<0:
-                self.energy+=0.1
-            #Energy calculations
-            if self.energy < 20:
-                eRegen = (self.energy / 105)+0.005
-            elif self.energy < 75:
-                eRegen = 0.19
-            else:
-                eRegen = max(0.005,0.0075 + (100-self.energy) / 250)
-            for heart in health:
-                if heart.type == 3 and heart.amt == 2:
-                    eRegen*=1.125
-                    self.energy+=0.0025
-                    self.yv-=0.001
-                    self.xv+=0.001*self.facing
-
-
-
-            #Object Collision Detection
-
-            #Ground Collision (self.col[0] is the bottom of the model)
-            if any(se.detect(i,self.col[0],(0,80,250))[0]==1 for i in range(-21,29,8)):
-                if self.onGround==False:
-                    self.ypos+=1
-                    self.energy+=(5*eRegen)+0.5 #give you a bit of energy on landing
-                    if 0.5<self.yv<4.5:
-                        self.animation = 'landed'
-                        self.aniTimer = 1+int(self.yv*2.5)
-                    elif self.yv>4.5:
-                        self.aniTimer = 20
-                        self.animation = 'hardlanded'
-                        self.maxSpd=1.5
-                        if self.yv>7.75:
-                            dealDmg(3)
-                        elif self.yv>6.5:
-                            dealDmg(2)
-                        elif self.yv>5.75:
-                            dealDmg(1)
-                        
-                self.onGround = True
-                #Slowdown if you landed hard
-                if self.animation=='hardlanded':
-                    self.xv*=0.5
-                self.yv = 0
-                self.gravity = 0
-                self.abilities[0] = 1 #Jump
-                self.abilities[1] = 15 #Jump Extension 
-                self.abilities[2] = 4 #Double Jump
-                self.abilities[3] = 2 #Dive
-                self.abilities[4] = 2 #Dive Jump
-                self.energy+=eRegen+0.0001
-            else:
-                self.onGround = False
-                self.gravity = 1
-                self.energy+=(eRegen/40*(max(0,self.yv)))
-                    
-
-                #Up detection (only run when not on ground)
-                if any(se.detect(i,self.col[1],(200,200,200))[0]==1 for i in range(-22,23,11)): #Up
-                    self.yv = 0
-                    self.ypos+=1
-                    self.jCounter=0
-            
-            #Right & Left Detection
-            self.onWall=0
-            if any(se.detect(self.col[2],i,(200,100,0))[0]==1 for i in range(-90,11,25)): #Right
-                self.onWall = 1
-                self.xv = 0
-            if any(se.detect(self.col[3],i,(200,100,0))[0]==1 for i in range(-90,11,25)): #Left
-                self.onWall = -1
-                self.xv = 0
-
-            #Energy Cap
-            if self.energy>100:
-                self.energy=100
-
-
-
-            if keys[pg.K_SPACE] or keys[pg.K_UP]:
-
-                #Main Single Jump
-                if self.abilities[0]>0:
-                    self.jCounter=(12-(3*self.abilities[0]))
-                    self.abilities[0]-=0.25
-                    self.yv-=0.35+(0.025*abs(self.xv))
-                    self.animation = 'jump'
-
-                #Jump Extension
-                if not self.onGround and self.abilities[0]<=0 and self.abilities[1]>0 and self.energy>0.175:
-                    self.yv-=0.0325
-                    if self.abilities[1]<12.5:
-                        self.energy-=0.175
-                    self.abilities[1]-=0.25
-
-                #Hover
-                if self.yv>0 and self.energy>0.1 and self.animation!='djumpdown':
-                    self.yv-=0.015
-                    self.yv*=0.97
-                    self.jCounter=1
-                    self.energy-=(0.06+(0.0125*abs(self.xv)))
-
-                    self.animation = 'hover'
-
-                
-                #Double Jump
-                if 0<self.abilities[2]<4 and not self.onGround and not self.wallClimb and self.abilities[0]<=0 and self.abilities[3]==2 and self.energy>0.8 and not self.wallClimb:
-                    if self.yv>0:
-                        self.yv*=0.4
-                    self.yv-=(0.325+0.0125*abs(self.xv))
-                    self.maxSpd = 2.85
-                    self.xv*=1.0125
-                    self.abilities[2]-=0.25
-                    self.energy-=0.8
-                    self.jCounter=(8+(2*(7-self.abilities[2])))
-                    self.aniFrame=1
-                    if self.animation!='djumpdown' and self.animation!='djumpup':
-                        if self.yv>0:
-                            self.animation = 'djumpdown'
-                        else:
-                            self.animation = 'djumpup'
-
-
-                #Jump out of dive
-                if self.abilities[4]>0 and not self.onGround and self.abilities[0]<=0 and self.abilities[3]!=2 and self.energy>1:
-                    self.yv*=0.925
-                    self.yv-=0.45
-                    self.xv*=0.95
-                    self.abilities[4]-=0.25
-                    self.abilities[3]=0
-                    self.energy-=1
-                    self.jCounter=4
-                    #animation
-                    self.animation = 'hover'
-
-            #Logic when not pressing space    
-            else:
-                if 0<self.abilities[0]<4 and not self.onGround: #Lose your single jump if you let go of space
-                    self.abilities[0]=0
-                    self.abilities[1]=0
-                if self.abilities[0]<=0 and self.abilities[2]==4: #Activate double jump once you let go of space after normal jumping
-                    self.abilities[2]=3
-                    self.abilities[1]=0
-                if 0<self.abilities[2]<3: #lose double jump if you let go early
-                    self.abilities[2]=0
-                
-                #Hop off of wall by letting go (fix for right-side wall jump)
-                self.wallclimb = False
-
-                #Slight hover at the end of jumps
-                if self.yv>-1 and self.jCounter>0:
-                    self.energy-=0.05
-                    self.gravity = 0.45
-
-            #Wall slide 
-                if all(se.detect(self.facing*31,i,(140,140,0))[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0:
-                    self.jCounter=2
-                    self.wallClimb = True
-
-                    #self.animation = 'wallslide'
-
-            #Wall Jump
-                if self.wallClimb and self.energy>6 and (((keys[pg.K_a] or keys[pg.K_LEFT]) and self.onWall==1) or ((keys[pg.K_d] or keys[pg.K_RIGHT]) and self.onWall==-1) or (keys[pg.K_SPACE] or keys[pg.K_UP])):
-                    self.yv*=0.25
-                    self.yv-=3.75
-                    self.jCounter=20
-                    self.xv = -self.facing*3
-                    self.energy-=6
-                    self.wallClimb = False
-                    self.abilities[3]=2
-                    self.abilities[4]=1
-                    self.animation= 'jump' #change to walljump
-
-            #Dive
-            if keys[pg.K_LCTRL]:
-                if self.abilities[3]>0 and self.abilities[0]<=0 and self.energy>10:
-                    if self.dFacing == 1:
-                        self.xv = 4.25
-                    else:
-                        self.xv = -4.25
-                    self.yv*=0.975
-                    self.yv-=0.125
-                    self.abilities[2]=0
-                    self.abilities[3]-=0.1
-                    self.energy-=1
-                    self.maxSpd = 3.4
-
-                    self.animation = 'jump' #change this to 'dive' when dive animation is implemented
-            
-            #Kunai Spawning on e or click
-            if kunais > 0 and self.kunaiAni<18 and self.energy>10 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
-                if self.kunaiAni!=0:
-                    kunais-=1
-                    self.energy-=2
-                self.kunaiAni = 40
-                self.energy-=8
-                #self.animation = 'none'
-
-            #Directional Inputs
-            self.facing = 0
-
-            #On the ground, you have a lot more traction
-            if self.onGround:
-                if keys[pg.K_a] or keys[pg.K_LEFT] and self.onWall!=-1:
-                    self.xv-=0.1225
-                    self.facing = -1
-                    self.animation='run'
-                    if self.maxSpd<2.75:
-                        self.maxSpd+=0.002
-                elif keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
-                    self.xv+=0.1225
-                    self.facing = 1
-                    self.animation='run'
-                    if self.maxSpd<2.75:
-                        self.maxSpd+=0.002
-                else:
-                    if self.maxSpd>1.9:
-                        self.maxSpd-=0.04
-                self.xv*=0.96
-                if self.facing == 0 or self.facing / self.xv<0:
-                    self.maxSpd = 2
-
-            #In the air you have a lot less traction
-            else:
-                if self.maxSpd>2.25:
-                    self.maxSpd-=0.002
-                if keys[pg.K_a] or keys[pg.K_LEFT] and self.onWall!=-1:
-                    self.xv-=0.02
-                    self.facing = -1
-                if keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
-                    self.xv+=0.02
-                    self.facing = 1
-                self.xv*=0.9915
-            
-            if self.xv>self.maxSpd:
-                self.xv-=0.0425
-            if self.xv<-self.maxSpd:
-                self.xv+=0.0425
-            if self.maxSpd>2.75:
-                self.maxSpd-=0.01
-            
-            #Forfeit floatiness with S or down arrow
-            if keys[pg.K_s] or keys[pg.K_DOWN]:
-                self.jCounter=0
-            if keys[pg.K_w]:
+        dtr = 240/targetFps
+        #Reduce jump hover counter
+        if self.jCounter>0:
+            self.jCounter-=0.25*dtr
+        #Incrase energy if it ends up below 0 (somehow)
+        if self.energy < 0:
+            self.energy = 1
+        #Energy calculations
+        if self.energy < 20:
+            eRegen = dtr*((self.energy / 105)+0.005)
+        elif self.energy < 75:
+            eRegen = 0.19*dtr
+        else:
+            eRegen = dtr*(max(0.005,0.0075 + (100-self.energy) / 250))
+        for heart in health:
+            if heart.type == 3 and heart.amt == 2:
+                eRegen*=1.125
+                self.energy+=0.0025*dtr
                 self.yv-=0.001
-                self.energy-=0.01
+                self.xv+=0.001*self.facing
 
-            #Stop if you're going very slow & change animation
-            self.yv+=self.gravity*0.03025
-            if abs(self.xv)<0.4 and self.onGround and self.animation!='landed' and self.animation!='hardlanded':
+
+
+        #Object Collision Detection
+
+        #Ground Collision (self.col[0] is the bottom of the model)
+        if any(se.detect(i,self.col[0],(0,80,250))[0]==1 for i in range(-21,29,8)):
+            if self.onGround==False:
+                self.energy+=dtr*((5*eRegen)+0.5) #give you a bit of energy on landing
+                if 0.5<self.yv<4.5:
+                    self.animation = 'landed'
+                    self.aniTimer = 1+int(self.yv*2.5)
+                elif self.yv > 4.5:
+                    self.aniTimer = 20
+                    self.animation = 'hardlanded'
+                    self.maxSpd=1.5
+                    if self.yv>7.75:
+                        dealDmg(3)
+                    elif self.yv>6.5:
+                        dealDmg(2)
+                    elif self.yv>5.75:
+                        dealDmg(1)
+                    
+            self.onGround = True
+            #Slowdown if you landed hard
+            if self.animation=='hardlanded':
+                self.xv*=0.5
+            self.yv = 0
+            self.gravity = 0
+            self.abilities[0] = 1 #Jump
+            self.abilities[1] = 15 #Jump Extension 
+            self.abilities[2] = 4 #Double Jump
+            self.abilities[3] = 2 #Dive
+            self.abilities[4] = 2 #Dive Jump
+            self.energy+=(eRegen+0.0001)*dtr
+        else:
+            self.onGround = False
+            self.gravity = 1
+            self.energy+=dtr*((eRegen/40*(max(0,self.yv))))
+                
+
+            #Up detection (only run when not on ground)
+            if any(se.detect(i,self.col[1],(200,200,200))[0]==1 for i in range(-22,23,11)): #Up
+                self.yv = 0
+                self.ypos+=1
+                self.jCounter=0
+        
+        #Right & Left Detection
+        self.onWall=0
+        if any(se.detect(self.col[2],i,(200,100,0))[0]==1 for i in range(-90,11,25)): #Right
+            self.onWall = 1
+            self.xv = 0
+        if any(se.detect(self.col[3],i,(200,100,0))[0]==1 for i in range(-90,11,25)): #Left
+            self.onWall = -1
+            self.xv = 0
+
+        #Energy Cap
+        if self.energy>100:
+            self.energy=100
+
+
+
+        if keys[pg.K_SPACE] or keys[pg.K_UP]:
+
+            #Main Single Jump
+            if self.abilities[0]>0:
+                self.jCounter=dtr*((12-(3*self.abilities[0])))
+                self.abilities[0]-=dtr*0.25
+                self.yv-=(0.35+(0.025*abs(self.xv)))
+                self.animation = 'jump'
+
+            #Jump Extension
+            if not self.onGround and self.abilities[0]<=0 and self.abilities[1]>0 and self.energy>0.175*dtr:
+                self.yv-=0.0325
+                if self.abilities[1]<12.5:
+                    self.energy-=0.175*dtr
+                self.abilities[1]-=0.25*dtr
+
+            #Hover
+            if self.yv>0 and self.energy>0.1*dtr and self.animation!='djumpdown':
+                self.yv-=0.015
+                self.yv*=0.97
+                self.jCounter=1*dtr
+                self.energy-=dtr*((0.06+(0.0125*abs(self.xv))))
+
+                self.animation = 'hover'
+
+            
+            #Double Jump
+            if 0<self.abilities[2]<4 and not self.onGround and not self.wallClimb and self.abilities[0]<=0 and self.abilities[3]==2 and self.energy>0.8*dtr and not self.wallClimb:
+                if self.yv>0:
+                    self.yv*=0.4
+                self.yv-=((0.325+0.0125*abs(self.xv)))
+                self.maxSpd = 2.85
+                self.xv*=1.0125
+                self.abilities[2]-=dtr*(0.25)
+                self.energy-=dtr*0.8
+                self.jCounter=dtr*((8+(2*(7-self.abilities[2]))))
+                self.aniFrame = 1
+                if self.animation!='djumpdown' and self.animation!='djumpup':
+                    if self.yv>0:
+                        self.animation = 'djumpdown'
+                    else:
+                        self.animation = 'djumpup'
+
+
+            #Jump out of dive
+            if self.abilities[4]>0 and not self.onGround and self.abilities[0]<=0 and self.abilities[3]!=2 and self.energy>1*dtr:
+                self.yv*=0.925
+                self.yv-=0.45
+                self.xv*=0.95
+                self.abilities[4]-=dtr*0.25
+                self.abilities[3]=0
+                self.energy-=1
+                self.jCounter=4*dtr
+                #animation
+                self.animation = 'hover'
+
+        #Logic when not pressing space    
+        else:
+            if 0<self.abilities[0]<4 and not self.onGround: #Lose your single jump if you let go of space
+                self.abilities[0]=0
+                self.abilities[1]=0
+            if self.abilities[0]<=0 and self.abilities[2]==4: #Activate double jump once you let go of space after normal jumping
+                self.abilities[2]=3
+                self.abilities[1]=0
+            if 0<self.abilities[2]<3: #lose double jump if you let go early
+                self.abilities[2]=0
+            
+            #Hop off of wall by letting go (fix for right-side wall jump)
+            self.wallclimb = False
+
+            #Slight hover at the end of jumps
+            if self.yv>-1 and self.jCounter>0:
+                self.energy-=0.05*dtr
+                self.gravity = 0.45
+
+        #Wall slide 
+            if all(se.detect(self.facing*31,i,(140,140,0))[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0:
+                self.jCounter=2*dtr
+                self.wallClimb = True
+
+                #self.animation = 'wallslide'
+
+        #Wall Jump
+            if self.wallClimb and self.energy>6*dtr and (((keys[pg.K_a] or keys[pg.K_LEFT]) and self.onWall==1) or ((keys[pg.K_d] or keys[pg.K_RIGHT]) and self.onWall==-1) or (keys[pg.K_SPACE] or keys[pg.K_UP])):
+                self.yv*=0.25
+                self.yv-=3.75
+                self.jCounter=20*dtr
+                self.xv = -self.facing*3
+                self.energy-=6*dtr
+                self.wallClimb = False
+                self.abilities[3]=2
+                self.abilities[4]=1
+                self.animation = 'jump' #change to walljump
+
+        #Dive
+        if keys[pg.K_LCTRL]:
+            if self.abilities[3]>0 and self.abilities[0]<=0 and self.energy>10*dtr:
+                if self.dFacing == 1:
+                    self.xv = 4.25
+                else:
+                    self.xv = -4.25
+                self.yv*=0.975
+                self.yv-=0.125
+                self.abilities[2]=0
+                self.abilities[3]-=0.1*dtr
+                self.energy-=1*dtr
+                self.maxSpd = 3.4
+
+                self.animation = 'jump' #change this to 'dive' when dive animation is implemented
+        
+        #Kunai Spawning on e or click
+        if kunais > 0 and self.kunaiAni<18 and self.energy>10 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
+            if self.kunaiAni!=0:
+                kunais-=1
+                self.energy-=2*dtr
+            self.kunaiAni = 40
+            self.energy-=8*dtr
+            #self.animation = 'none'
+
+        #Directional Inputs
+        self.facing = 0
+
+        #On the ground, you have a lot more traction
+        if self.onGround:
+            if keys[pg.K_a] or keys[pg.K_LEFT] and self.onWall!=-1:
+                self.xv-=0.1225
+                self.facing = -1
+                self.animation='run'
+                if self.maxSpd<2.75:
+                    self.maxSpd+=0.002
+            elif keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
+                self.xv+=0.1225
+                self.facing = 1
+                self.animation='run'
+                if self.maxSpd<2.75:
+                    self.maxSpd+=0.002
+            else:
+                if self.maxSpd>1.9:
+                    self.maxSpd-=0.04
+            self.xv*=0.96
+            if self.facing == 0 or self.facing / self.xv<0:
+                self.maxSpd = 2
+
+        #In the air you have a lot less traction
+        else:
+            if self.maxSpd>2.25:
+                self.maxSpd-=0.002
+            if keys[pg.K_a] or keys[pg.K_LEFT] and self.onWall!=-1:
+                self.xv-=0.02
+                self.facing = -1
+            if keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
+                self.xv+=0.02
+                self.facing = 1
+            self.xv*=0.9915
+        
+        if self.xv>self.maxSpd:
+            self.xv-=0.0425
+        if self.xv<-self.maxSpd:
+            self.xv+=0.0425
+        if self.maxSpd>2.75:
+            self.maxSpd-=0.01
+        
+        #Forfeit floatiness with S or down arrow
+        if keys[pg.K_s] or keys[pg.K_DOWN]:
+            self.jCounter=0
+        if keys[pg.K_w]:
+            self.yv-=0.001
+            self.energy-=0.01*dtr
+
+        #Stop if you're going very slow & change animation
+        self.yv+=self.gravity*0.03025*dtr
+        if abs(self.xv)<0.4 and self.onGround and self.animation!='landed' and self.animation!='hardlanded':
+            self.animation='none'
+            self.saveAni='none'
+        if abs(self.xv)<0.1 and self.onGround:
+            self.xv*=self.xv
+        if self.onWall==-1:
+            self.xv = max(0,self.xv)
+            if self.onGround:
                 self.animation='none'
-                self.saveAni='none'
-            if abs(self.xv)<0.1 and self.onGround:
-                self.xv*=self.xv
-            if self.onWall==-1:
-                self.xv = max(0,self.xv)
-                if self.onGround:
-                    self.animation='none'
-            if self.onWall==1:
-                self.xv = min(0,self.xv)
-                if self.onGround:
-                    self.animation='none'
-            if self.animation=='run' and not self.onGround:
-                self.animation='falling'
-            
-            #Set display facing, used for animations
-            if self.facing!=0:
-                self.dFacing = self.facing
-            
-            #Caps on vertical speed
-            if not -3<self.yv<8.5:
-                self.yv*=0.985
-            
-            #Updating x & y pos
-            self.xpos+=self.xv
-            self.ypos+=self.yv
-            self.dt-=1
+        if self.onWall==1:
+            self.xv = min(0,self.xv)
+            if self.onGround:
+                self.animation='none'
+        if self.animation=='run' and not self.onGround:
+            self.animation='falling'
+        
+        #Set display facing, used for animations
+        if self.facing!=0:
+            self.dFacing = self.facing
+        
+        #Caps on vertical speed
+        if not -3<self.yv<8.5:
+            self.yv*=0.985
+        
+        #Updating x & y pos
+        self.xpos+=self.xv*dtr
+        self.ypos+=self.yv*dtr
         pl.animations()
 
 class Kunai(pg.sprite.Sprite):

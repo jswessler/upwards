@@ -5,6 +5,9 @@ Requires: pygame > 2.3, numpy
 
 Release Log:
 
+id148.2PT
+* Physics test using dt instead of doing multiple steps per frame
+
 id148.2
 - Debug fixes
 - Prep for physics overhaul (fork)
