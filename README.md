@@ -5,6 +5,17 @@ Requires: pygame > 2.3, numpy
 
 Release Log:
 
+id148.3
+* Added sliding (no animation yet)
+   - Press S on the ground for a speed boost on a cooldown
+   - Press S right after landing for a bigger speed boost
+   - Jump at the end of the slide for a higher jump
+   - Sliding off a ledge gives some extra airtime
+   - Sliding can get you under obstacles
+* Wallslide animation
+- Wallslide is now more like a slide rather than low gravity
+- Physics adjustments & fixes
+
 id148.2
 - Debug fixes
 - Prep for physics overhaul (fork)

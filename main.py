@@ -12,7 +12,7 @@ import heart
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id148.2" #Build Identifier
+buildId = "id148.3" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -26,8 +26,11 @@ class Player(pg.sprite.Sprite):
         self.jCounter = 0
         self.abilities = [4,15,0,2,2] #Jump, Extended Jump, Double Jump, Dive, Jump Dive
         self.wallClimb = False
+        self.timeOnGround = 0
         self.onGround = True
         self.counter=0
+        self.slide = 0
+        self.slideBoost = 0
         self.img = ''
         self.imgPos = [0,0]
         self.dFacing = 1
@@ -39,6 +42,7 @@ class Player(pg.sprite.Sprite):
         self.dt = 0
         self.maxSpd = 2.05
         self.kunaiAni = 0
+        self.slideMult = 0
 
         #Collision Boxes. bottom, top, right, left (in that order)
         self.col = [12,-100,30,-25]
@@ -153,6 +157,8 @@ class Player(pg.sprite.Sprite):
 
             elif self.yv>-0.5 and (self.nextAni=='high' or self.nextAni=='low') and not self.onGround: #If we have a queued animation
                 #High Transition after Jump
+                if self.aniiTimer<-1:
+                    self.aniiTimer = 13
                 if self.nextAni == 'high':
                     if self.aniiTimer < 0:
                         self.nextAni = 'none'
@@ -188,6 +194,13 @@ class Player(pg.sprite.Sprite):
             #Walljump
 
             #Wallslide
+                if self.animation == 'wallslide':
+                    if self.counter % 20 < 10:
+                        self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","wallslide.png"))
+                    else:
+                        self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","wallslide2.png"))
+                    self.img = imgPos(self.img,-self.dFacing)
+                    self.imgPos = [-26,-101]
 
             #Double Jump
                 if self.nextAni == 'djump':
@@ -290,7 +303,7 @@ class Player(pg.sprite.Sprite):
         self.dt+=240/targetFps
 
         #Do collision detection using 8 points scattered around your model
-        for i in range(-93,20,32):
+        for i in range(self.col[1]+7,20,32):
             for j in range(-14,19,32):
                 det,bl,st = se.detect(j,i,(180,0,180))
                 playerCollisionDetection(det,bl,st)
@@ -332,18 +345,20 @@ class Player(pg.sprite.Sprite):
                     if 0.5<self.yv<4.5:
                         self.animation = 'landed'
                         self.aniTimer = 1+int(self.yv*2.5)
-                    elif self.yv>4.5:
+                    elif self.yv > 4.5:
                         self.aniTimer = 20
                         self.animation = 'hardlanded'
-                        self.maxSpd=1.5
-                        if self.yv>7.75:
+                        self.maxSpd = 1.5
+                        if self.yv > 7.75:
                             dealDmg(3)
-                        elif self.yv>6.5:
+                        elif self.yv > 6.5:
                             dealDmg(2)
-                        elif self.yv>5.75:
+                        elif self.yv > 5.75:
                             dealDmg(1)
                         
                 self.onGround = True
+                self.timeOnGround += 1
+
                 #Slowdown if you landed hard
                 if self.animation=='hardlanded':
                     self.xv*=0.5
@@ -357,8 +372,14 @@ class Player(pg.sprite.Sprite):
                 self.energy+=eRegen+0.0001
             else:
                 self.onGround = False
+                self.timeOnGround = 0
                 self.gravity = 1
                 self.energy+=(eRegen/40*(max(0,self.yv)))
+                #Slide off an edge
+                if self.slide > 0:
+                    self.slide -= min(3,self.slide)
+                    self.jCounter = 2
+                    self.energy-=0.06
                     
 
                 #Up detection (only run when not on ground)
@@ -369,10 +390,10 @@ class Player(pg.sprite.Sprite):
             
             #Right & Left Detection
             self.onWall=0
-            if any(se.detect(self.col[2],i,(200,100,0))[0]==1 for i in range(-90,11,25)): #Right
+            if any(se.detect(self.col[2],i,(200,100,0))[0]==1 for i in range(self.col[1]+10,11,25)): #Right
                 self.onWall = 1
                 self.xv = 0
-            if any(se.detect(self.col[3],i,(200,100,0))[0]==1 for i in range(-90,11,25)): #Left
+            if any(se.detect(self.col[3],i,(200,100,0))[0]==1 for i in range(self.col[1]+10,11,25)): #Left
                 self.onWall = -1
                 self.xv = 0
 
@@ -385,10 +406,13 @@ class Player(pg.sprite.Sprite):
             if keys[pg.K_SPACE] or keys[pg.K_UP]:
 
                 #Main Single Jump
-                if self.abilities[0]>0:
-                    self.jCounter=(12-(3*self.abilities[0]))
-                    self.abilities[0]-=0.25
-                    self.yv-=0.35+(0.025*abs(self.xv))
+                if self.abilities[0] > 0: #Jump
+                    if self.slide >= 190 and self.slideBoost == 0: #Sliding Boost
+                        self.slideBoost = math.pow(90-(self.slide-190),2)
+                    self.jCounter = (12 - (3 * self.abilities[0]))
+                    self.abilities[0] -= 0.25 if self.slideBoost == 0 else 0.5
+                    print(self.slideBoost)
+                    self.yv -= 0.35*(1+(self.slideBoost/3000)) + (0.025 * abs(self.xv))
                     self.animation = 'jump'
 
                 #Jump Extension
@@ -440,6 +464,7 @@ class Player(pg.sprite.Sprite):
 
             #Logic when not pressing space    
             else:
+                self.slideBoost = 0
                 if 0<self.abilities[0]<4 and not self.onGround: #Lose your single jump if you let go of space
                     self.abilities[0]=0
                     self.abilities[1]=0
@@ -458,11 +483,18 @@ class Player(pg.sprite.Sprite):
                     self.gravity = 0.45
 
             #Wall slide 
-                if all(se.detect(self.facing*31,i,(140,140,0))[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0:
+                if all(se.detect(self.facing*31,i,(140,140,0))[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0 and self.energy>0.24:
                     self.jCounter=2
+                    if self.yv > 1.5:
+                        self.yv = 1.5
                     self.wallClimb = True
-
-                    #self.animation = 'wallslide'
+                    self.energy-=0.04
+                    self.animation = 'wallslide'
+                    self.nextAni = 'none'
+                elif self.animation == 'wallslide':
+                    self.nextAni = 'low'
+                    self.animation = 'none'
+                    self.aniiTimer = 13
 
             #Wall Jump
                 if self.wallClimb and self.energy>6 and (((keys[pg.K_a] or keys[pg.K_LEFT]) and self.onWall==1) or ((keys[pg.K_d] or keys[pg.K_RIGHT]) and self.onWall==-1) or (keys[pg.K_SPACE] or keys[pg.K_UP])):
@@ -489,17 +521,16 @@ class Player(pg.sprite.Sprite):
                     self.abilities[3]-=0.1
                     self.energy-=1
                     self.maxSpd = 3.4
-
                     self.animation = 'jump' #change this to 'dive' when dive animation is implemented
-            
+                
             #Kunai Spawning on e or click
-            if kunais > 0 and self.kunaiAni<18 and self.energy>10 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
+            if kunais > 0 and self.kunaiAni<18 and self.energy>20 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
                 if self.kunaiAni!=0:
                     kunais-=1
-                    self.energy-=2
+                    self.energy-=6
                 self.kunaiAni = 40
-                self.energy-=8
-                #self.animation = 'none'
+                self.energy-=12
+                #self.animation = 'none' #change this to throwing animation
 
             #Directional Inputs
             self.facing = 0
@@ -511,19 +542,44 @@ class Player(pg.sprite.Sprite):
                     self.facing = -1
                     self.animation='run'
                     if self.maxSpd<2.75:
-                        self.maxSpd+=0.002
+                        self.maxSpd+=0.004
                 elif keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
                     self.xv+=0.1225
                     self.facing = 1
                     self.animation='run'
                     if self.maxSpd<2.75:
-                        self.maxSpd+=0.002
+                        self.maxSpd+=0.004
                 else:
                     if self.maxSpd>1.9:
-                        self.maxSpd-=0.04
+                        self.maxSpd-=0.02
                 self.xv*=0.96
                 if self.facing == 0 or self.facing / self.xv<0:
                     self.maxSpd = 2
+                
+                #Slide
+                if (keys[pg.K_s] or keys[pg.K_DOWN]) and abs(self.xv)>1.6 and self.energy > 15 and (self.slide == 0 or self.slide > 200):
+                    self.col = [12,-40,30,-25]
+                    if self.timeOnGround < 15 and self.slideMult == 0:
+                        self.slideMult = 1.5
+                    else:
+                        self.slideMult = 1
+                    self.maxSpd = 3.25*self.slideMult
+                    if 0 < self.xv < 3.25*self.slideMult:
+                        self.xv += 0.45*self.slideMult
+                    elif -3.25*self.slideMult < self.xv < 0:
+                        self.xv -= 0.45*self.slideMult
+                    if self.slide == 0:
+                        self.xv *= 1.5 * self.slideMult
+                        self.slide = 280
+                        self.energy -= 5
+                else:
+                    self.col = [12,-100,30,-25]
+                if self.slide > 0:
+                    self.slide -= 1
+                    if self.slide < 200:
+                        self.slideMult = 0
+                    else:
+                        self.energy-=0.24
 
             #In the air you have a lot less traction
             else:
@@ -750,7 +806,7 @@ def moveCamera(mousex,mousey,rxy=0):
     remcx = camerax
     remcy = cameray
     camerax += (tx-camerax)*0.0575*(60/targetFps)+random.uniform(-rxy,rxy)
-    cameray += (ty-cameray)*0.125*(60/targetFps)+random.uniform(-rxy,rxy)+(-16 if ke[pg.K_w] else 16 if ke[pg.K_s] else 0)
+    cameray += (ty-cameray)*0.125*(60/targetFps)+random.uniform(-rxy,rxy)+(-16 if ke[pg.K_w] else 4 if ke[pg.K_s] else 0)
     diffcx = (-math.sqrt(abs(camerax-remcx)) if camerax-remcx<0 else math.sqrt(camerax-remcx))
     diffcy = (-math.sqrt(abs(cameray-remcy)) if cameray-remcy<0 else math.sqrt(cameray-remcy))
 
