@@ -11,8 +11,8 @@ import time
 import heart
 
 gamePath = os.getcwd() #Path to game directory
-idealFps = 60 #Target FPS for the game to aim for
-buildId = "id147.1" #Build Identifier
+idealFps = 144 #Target FPS for the game to aim for
+buildId = "id148.1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -46,8 +46,8 @@ class Player(pg.sprite.Sprite):
     def animations(self):
         global kunais,kuAni
         if self.aniTimer>=0:
-            self.aniTimer-=60/targetFps
-        self.aniiTimer-=60/targetFps
+            self.aniTimer-=float(60/targetFps)
+        self.aniiTimer-=float(60/targetFps)
 
         #Tumble Landing
         
@@ -56,9 +56,7 @@ class Player(pg.sprite.Sprite):
             if self.aniTimer<0:
                 self.animation = 'none'
             self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","land.png"))
-            self.img = pg.transform.scale_by(self.img,2)
-            if self.dFacing==-1:
-                self.img = pg.transform.flip(self.img,True,False)
+            self.img = imgPos(self.img,self.dFacing)
             self.imgPos = [-36,-94]
         
         #Hard Landing (11 frame animation with 3 images)
@@ -71,9 +69,7 @@ class Player(pg.sprite.Sprite):
                 self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hardland2.png"))
             else:
                 self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hardland3.png"))
-            self.img = pg.transform.scale_by(self.img,2)
-            if self.dFacing==-1:
-                self.img = pg.transform.flip(self.img,True,False)
+            self.img = imgPos(self.img,self.dFacing)
             if self.aniTimer>11:
                 self.imgPos = [-34,-94]
             elif self.aniTimer>7:
@@ -110,9 +106,7 @@ class Player(pg.sprite.Sprite):
                         self.aniFrame=1
                     self.aniTimer = max(2,int(4.25-abs(self.xv)))
                 self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","run" + str(self.aniFrame) + ".png"))
-                self.img = pg.transform.scale_by(self.img,2)
-                if self.dFacing==-1:
-                    self.img = pg.transform.flip(self.img,True,False)
+                self.img = imgPos(self.img,self.dFacing)
                 self.imgPos = [-36,-94]
             
             #Idle (4 frame animation on a mod%60)
@@ -125,9 +119,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","idle3.png"))
                 else:
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","idle4.png"))
-                self.img = pg.transform.scale_by(self.img,2)
-                if self.dFacing==-1:
-                    self.img = pg.transform.flip(self.img,True,False)
+                self.img = imgPos(self.img,self.dFacing)
                 self.imgPos = [-26,-100]
         
 
@@ -138,6 +130,7 @@ class Player(pg.sprite.Sprite):
         #Hover (2 frame animation, 6 frame interval, 2 extra frames when low on energy)
             if self.animation == 'hover':
                 self.nextAni = 'low'
+                self.aniiTimer = 13
                 self.animation = 'none'
                 if self.aniTimer < 0:
                     self.aniFrame += 1
@@ -154,49 +147,41 @@ class Player(pg.sprite.Sprite):
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hovernl" + str(self.aniFrame) + ".png"))
                     else:
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hoverrl" + str(self.aniFrame) + ".png"))
-                self.img = pg.transform.scale_by(self.img,2)
-                if self.dFacing==-1:
-                    self.img = pg.transform.flip(self.img,True,False)
+                self.img = imgPos(self.img,self.dFacing)
                 self.imgPos = [-31,-102]
             #Air Transitions
 
             elif self.yv>-0.5 and (self.nextAni=='high' or self.nextAni=='low') and not self.onGround: #If we have a queued animation
-                if self.aniiTimer<0:
-                    self.aniiTimer=13 
-
+                print(self.aniiTimer)
                 #High Transition after Jump
-                if self.nextAni=='high':
-                    if self.aniiTimer<=0:
-                        self.nextAni='none'
-                        self.animation='falling'
+                if self.nextAni == 'high':
+                    if self.aniiTimer < 0:
+                        self.nextAni = 'none'
+                        self.animation = 'falling'
                     #After 3 frames, go to standard falling animation
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","jumptrans" + str(int((18-self.aniiTimer)/5)) + ".png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-100]
                 
                 #Mid Transition after double jump
-                elif self.nextAni=='mid':
-                    if self.aniiTimer<=0:
-                        self.nextAni='none'
-                        self.animation='falling'
+                elif self.nextAni == 'mid':
+                    if self.aniiTimer < 0:
+                        self.nextAni = 'none'
+                        self.animation = 'falling'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","lowtrans2.png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-100]
 
                 #Low transition after hover or dive jump
-                elif self.nextAni=='low':
-                    if self.aniiTimer<=0:
-                        self.nextAni='none'
-                        self.animation='falling'
+                elif self.nextAni == 'low':
+                    if self.aniiTimer < 0:
+                        self.nextAni = 'none'
+                        self.animation = 'falling'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","lowtrans" + str(int((18-self.aniiTimer)/5)) + ".png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-100]
+                if self.aniiTimer < 0:
+                    self.aniiTimer = 13 
             else:
             
             #Air Animations ------
@@ -206,17 +191,16 @@ class Player(pg.sprite.Sprite):
             #Wallslide
 
             #Double Jump
-                if self.nextAni=='djump':
-                    self.animation='falling'
-                    if self.aniTimer<0:
-                        self.aniFrame+=1
-                        self.aniTimer=3
-                    if self.aniFrame>4:
-                        self.nextAni='mid'
+                if self.nextAni == 'djump':
+                    self.animation = 'falling'
+                    if self.aniTimer < 0:
+                        self.aniFrame += 1
+                        self.aniTimer = 3
+                    if self.aniFrame > 4:
+                        self.nextAni = 'low'
+                        self.aniiTimer = 13
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djump" + str(min(3,self.aniFrame)) + ".png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-84,-101]
                 
                 #Djump transition (when moving up)
@@ -230,38 +214,33 @@ class Player(pg.sprite.Sprite):
                         self.nextAni='djump'
                         self.animation='none'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djumpup" + str(min(2,self.aniFrame)) + ".png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-32,-125]
                 
                 #Djump transition (when moving down)
-                elif self.animation=='djumpdown':
-                    if self.aniTimer<0:
-                        self.aniFrame+=1
-                        self.aniTimer=3
-                    if self.aniFrame>3:
-                        self.aniFrame=1
-                    if self.aniFrame==3:
-                        self.nextAni='djump'
-                        self.animation='none'
+                elif self.animation == 'djumpdown':
+                    if self.aniTimer < 0:
+                        self.aniFrame += 1
+                        self.aniTimer = 3
+                    if self.aniFrame > 3:
+                        self.aniFrame = 1
+                    if self.aniFrame == 3:
+                        self.nextAni = 'djump'
+                        self.animation = 'none'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djumpdown" + str(min(2,self.aniFrame)) + ".png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-104]
                     
                 #First Jump (2 frame animation on mod%30 that plays as long as you're moving up)
-                elif self.animation=='jump':
-                    self.nextAni='high'
-                    self.aniTimer=6
-                    if self.counter%30<16:
+                elif self.animation == 'jump':
+                    self.nextAni = 'high'
+                    self.aniiTimer = 13
+                    self.aniTimer = 6
+                    if self.counter%30 < 16:
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","jumpup1.png"))
                     else:
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","jumpup2.png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-100]
                 
 
@@ -280,18 +259,14 @@ class Player(pg.sprite.Sprite):
                     if self.aniFrame>4:
                         self.aniFrame=1
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","flail" + str(self.aniFrame) + ".png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-116]
 
-                elif self.nextAni=='fftrans':
-                    if self.aniTimer<0:
-                        self.nextAni='fastfall'
+                elif self.nextAni == 'fftrans':
+                    if self.aniTimer < 0:
+                        self.nextAni = 'fastfall'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","fftrans.png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-116]
 
                 #Falling
@@ -302,13 +277,11 @@ class Player(pg.sprite.Sprite):
                     if self.aniFrame>4:
                         self.aniFrame=1
                     if self.yv>4.25:
+                        self.aniTimer = 9
                         self.nextAni='fftrans'
                         self.animation='none'
-                        self.aniTimer=9
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","falling" + str(self.aniFrame) + ".png"))
-                    self.img = pg.transform.scale_by(self.img,2)
-                    if self.dFacing==-1:
-                        self.img = pg.transform.flip(self.img,True,False)
+                    self.img = imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-116]
 
     #Run Every Frame
@@ -317,24 +290,24 @@ class Player(pg.sprite.Sprite):
         self.counter+=60/targetFps
         self.dt+=240/targetFps
 
-        #Do collision detection using 15 points scattered around your model
-        for i in range(-96,16,32):
-            for j in range(-12,12,12):
-                det,bl,st = se.detect(j,i,True)
+        #Do collision detection using 8 points scattered around your model
+        for i in range(-93,20,32):
+            for j in range(-14,19,32):
+                det,bl,st = se.detect(j,i,(180,0,180))
                 playerCollisionDetection(det,bl,st)
 
         #For complicated reasons physics targets 240fps.
-        #If we're running below 240fps then we do multiple physics steps per frame
+        #If we're running below 240fps then we do multiple physics steps per drawn frame
         #We don't allow running above 240fps
         
         while self.dt>0:
-
-
+            #Reduce jump hover counter
             if self.jCounter>0:
                 self.jCounter-=0.25
-            
+            #Incrase energy if it ends up below 0 (somehow)
             if self.energy<0:
                 self.energy+=0.1
+            #Energy calculations
             if self.energy < 20:
                 eRegen = (self.energy / 105)+0.005
             elif self.energy < 75:
@@ -353,8 +326,7 @@ class Player(pg.sprite.Sprite):
             #Object Collision Detection
 
             #Ground Collision (self.col[0] is the bottom of the model)
-            if any(se.detect(i,self.col[0],True)[0]==1 for i in range(-21,29,7)):
-            
+            if any(se.detect(i,self.col[0],(0,80,250))[0]==1 for i in range(-21,29,8)):
                 if self.onGround==False:
                     self.ypos+=1
                     self.energy+=(5*eRegen)+0.5 #give you a bit of energy on landing
@@ -378,11 +350,11 @@ class Player(pg.sprite.Sprite):
                     self.xv*=0.5
                 self.yv = 0
                 self.gravity = 0
-                self.abilities[0] = 1
-                self.abilities[1] = 15
-                self.abilities[2] = 4
-                self.abilities[3] = 2
-                self.abilities[4] = 2
+                self.abilities[0] = 1 #Jump
+                self.abilities[1] = 15 #Jump Extension 
+                self.abilities[2] = 4 #Double Jump
+                self.abilities[3] = 2 #Dive
+                self.abilities[4] = 2 #Dive Jump
                 self.energy+=eRegen+0.0001
             else:
                 self.onGround = False
@@ -391,17 +363,17 @@ class Player(pg.sprite.Sprite):
                     
 
                 #Up detection (only run when not on ground)
-                if any(se.detect(i,self.col[1],True)[0]==1 for i in range(-22,23,11)): #Up
+                if any(se.detect(i,self.col[1],(200,200,200))[0]==1 for i in range(-22,23,11)): #Up
                     self.yv = 0
                     self.ypos+=1
                     self.jCounter=0
             
             #Right & Left Detection
             self.onWall=0
-            if any(se.detect(self.col[2],i,True)[0]==1 for i in range(-90,20,10)): #Right
+            if any(se.detect(self.col[2],i,(200,100,0))[0]==1 for i in range(-90,11,25)): #Right
                 self.onWall = 1
                 self.xv = 0
-            if any(se.detect(self.col[3],i,True)[0]==1 for i in range(-90,20,10)): #Left
+            if any(se.detect(self.col[3],i,(200,100,0))[0]==1 for i in range(-90,11,25)): #Left
                 self.onWall = -1
                 self.xv = 0
 
@@ -420,14 +392,12 @@ class Player(pg.sprite.Sprite):
                     self.yv-=0.35+(0.025*abs(self.xv))
                     self.animation = 'jump'
 
-
                 #Jump Extension
                 if not self.onGround and self.abilities[0]<=0 and self.abilities[1]>0 and self.energy>0.175:
                     self.yv-=0.0325
                     if self.abilities[1]<12.5:
                         self.energy-=0.175
                     self.abilities[1]-=0.25
-
 
                 #Hover
                 if self.yv>0 and self.energy>0.1 and self.animation!='djumpdown':
@@ -474,15 +444,14 @@ class Player(pg.sprite.Sprite):
                 if 0<self.abilities[0]<4 and not self.onGround: #Lose your single jump if you let go of space
                     self.abilities[0]=0
                     self.abilities[1]=0
-                if self.abilities[0]<=0 and self.abilities[2]==4: #Lose your double jump
+                if self.abilities[0]<=0 and self.abilities[2]==4: #Activate double jump once you let go of space after normal jumping
                     self.abilities[2]=3
                     self.abilities[1]=0
-                if 0<self.abilities[2]<3:
+                if 0<self.abilities[2]<3: #lose double jump if you let go early
                     self.abilities[2]=0
                 
-                #Hop off of wall by letting go
-                if self.wallClimb:
-                    self.wallClimb = False
+                #Hop off of wall by letting go (fix for right-side wall jump)
+                self.wallclimb = False
 
                 #Slight hover at the end of jumps
                 if self.yv>-1 and self.jCounter>0:
@@ -490,7 +459,7 @@ class Player(pg.sprite.Sprite):
                     self.gravity = 0.45
 
             #Wall slide 
-                if all(se.detect(self.facing*31,i,True)[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0:
+                if all(se.detect(self.facing*31,i,(140,140,0))[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0:
                     self.jCounter=2
                     self.wallClimb = True
 
@@ -506,12 +475,12 @@ class Player(pg.sprite.Sprite):
                     self.wallClimb = False
                     self.abilities[3]=2
                     self.abilities[4]=1
-                    self.animation= 'jump'
+                    self.animation= 'jump' #change to walljump
 
             #Dive
             if keys[pg.K_LCTRL]:
                 if self.abilities[3]>0 and self.abilities[0]<=0 and self.energy>10:
-                    if self.xv>=0:
+                    if self.dFacing == 1:
                         self.xv = 4.25
                     else:
                         self.xv = -4.25
@@ -522,7 +491,7 @@ class Player(pg.sprite.Sprite):
                     self.energy-=1
                     self.maxSpd = 3.4
 
-                    self.animation = 'jump' #change this when dive animation is implemented
+                    self.animation = 'jump' #change this to 'dive' when dive animation is implemented
             
             #Kunai Spawning on e or click
             if kunais > 0 and self.kunaiAni<18 and self.energy>10 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
@@ -638,7 +607,7 @@ class Kunai(pg.sprite.Sprite):
         if not self.stuck:
             self.xpos += self.xv
             self.ypos += self.yv
-        if any(self.kunaiSens.detect(int(math.sin(i)*10),int(math.cos(i)*10),True)[0]==1 for i in range(-3,3,1)):
+        if any(self.kunaiSens.detect(int(math.sin(i)*10),int(math.cos(i)*10),(255,20,0))[0]==1 for i in range(-3,3,1)):
             #hit a wall
             self.stuck = True
             self.gravity = 0
@@ -662,18 +631,18 @@ class Sensor(pg.sprite.Sprite):
     def __init__(self,orig):
         self.orig = orig
     
-    def detect(self,x,y,show=True):
+    def detect(self,x,y,color=(0,80,255)):
         global camerax,cameray
         xp = self.orig.xpos+x+self.orig.xv
         yp = self.orig.ypos+y+self.orig.yv
         block = (int(yp/32)*width)+int(xp/32)
         ret = level[block]
         subtype = levelSub[block]
-        if show and ke[pg.K_r]:
+        if ke[pg.K_r]:
             if ret!=0:
-                pg.draw.circle(screen,(0,255,80),(self.orig.xpos+x-camerax,self.orig.ypos+y-cameray),4)
+                pg.draw.circle(screen,(0,255,0),(self.orig.xpos+x-camerax,self.orig.ypos+y-cameray),4)
             else:
-                pg.draw.circle(screen,(0,40,255),(self.orig.xpos+x-camerax,self.orig.ypos+y-cameray),4)
+                pg.draw.circle(screen,color,(self.orig.xpos+x-camerax,self.orig.ypos+y-cameray),4)
         return ret,block,subtype
 
 
@@ -729,13 +698,13 @@ def loadARL(filename):
     levelSub = lv2
     bCounter = 0
     blocks = []
-    loadedTiles = ['']*65536
     for bl in level:
         if bl!=0:
             blocks.append((bl*256)+levelSub[bCounter])
         bCounter+=1
 
     #Converting to set to see which blocks to load
+    loadedTiles = ['']*65536
     setBlock = set(blocks)
     for i in setBlock:
         try:
@@ -743,20 +712,26 @@ def loadARL(filename):
         except:
             pass
 
+#Scale & Flip player images properly
+def imgPos(img,fac):
+    img = pg.transform.scale_by(img,2)
+    if fac==-1:
+        img = pg.transform.flip(img,True,False)
+    return img
 
-def cosTowardMouse(relx,rely): #Used for mouse direction
+#Get angle based on relative x and y
+def cosTowardMouse(relx,rely):
     dir = math.atan2(rely,relx)
     yf = math.sin(dir)
     xf = math.cos(dir)
     return xf,yf,dir
-    
 
-def getDist(ix,iy,dx,dy): #Get distance between 2 points
+#Get distance between 2 points
+def getDist(ix,iy,dx,dy):
     fx = dx-ix
     fy = dy-iy
     final = math.sqrt((fx**2)+(fy**2))
     return final
-
 
 #Camera moving algorithm
 def moveCamera(mousex,mousey,rxy=0):
@@ -781,7 +756,6 @@ def moveCamera(mousex,mousey,rxy=0):
     diffcy = (-math.sqrt(abs(cameray-remcy)) if cameray-remcy<0 else math.sqrt(cameray-remcy))
 
 #Defines collision detection between player and interactable objects (not walls)
-#Called 15 times per physics frame on 15 collision points arranged in a 5x3 grid on Aria
 def playerCollisionDetection(type,block,subtype):
     global level,levelSub,nextCall,triggerPhone,redrawHearts
     #Blocks are 1-3
@@ -838,18 +812,32 @@ def setLevelBlock(block,lvl,sLvl):
     level[block]=lvl
     levelSub[block]=sLvl
 
-#Changes tile properties such as dash crystal cooldown
-def tileProperties(mod): 
-    counter = int(mod*(len(level)/60))
-    while counter<int((mod+1)*(len(level)/60)):
-        block = level[counter]
-        if block==6:
-            if levelSub[counter]>0:
-                levelSub[counter]-=10
-            else:
-                level[counter]=4
-                levelSub[counter]=0
-        counter+=1
+#Return a list of x and y ranges that are on screen (coordinates, divide by 32 to get block numbers)
+def getOnScreen():
+    xs = max(0, int(camerax - 24))
+    xf = min(width * 32, int((camerax + WID + 24)))
+    ys = max(0, int(cameray - 24))
+    yf = min(height * 32, int((cameray + HEI + 24)))
+    xl = list(range(xs,xf,32))
+    yl = list(range(ys,yf,32))
+    return xl,yl
+
+#Changes on-screen tile properties such as dash crystal cooldown
+def tileProperties(mod):
+    xl,yl = getOnScreen()
+    yf = yl[int((mod/8)*len(yl)): int(((mod+1)/8)*len(yl))] #Only cover 1/8 of the screen per call
+    for x in xl:
+        for y in yf:
+            counter = (int(y/32)*width)+int(x/32) #pick 1 block
+            block = level[counter]
+            #Reduce dash crystal cooldown
+            if block==6:
+                if levelSub[counter]>0:
+                    levelSub[counter]-=1
+                #Set dash crystal cooldown tile back to dash crystal
+                else:
+                    level[counter]=4
+                    levelSub[counter]=0
 
 #Deals damage to hearts in order
 def dealDmg(amt):
@@ -873,7 +861,7 @@ def heal(amt):
 pg.init()
 WID = 1280
 HEI = 800
-gameScale = 1.0
+gameScale = 1
 screen = pg.display.set_mode((WID,HEI),pg.DOUBLEBUF|pg.RESIZABLE,vsync=True)
 running = True
 state = 'game'
@@ -929,7 +917,7 @@ while running:
     #Only if the physics are running
     if state=='game':
         pl.update(ke) #Do Physics
-        tileProperties(counter%60) #Update Tiles
+        tileProperties(counter%8) #Update Tiles (1/8 of the scren at a time)
         moveCamera(mousex,mousey,max(0,(pl.yv-2.5))) #Handle Camera Movement
     elif state=='phonecall' and boxWidth>width:
         moveCamera(mousex,mousey)
@@ -1051,8 +1039,9 @@ while running:
 
         #Draw Blocks
         re=0
-        for x in range(max(0,int(camerax-24)),min(width*32,int((camerax+WID+24))),32):
-            for y in range(max(0,int(cameray-24)),min(height*32,int((cameray+HEI+24))),32):
+        xl,yl = getOnScreen()
+        for x in xl:
+            for y in yl:
                 re+=1
                 i = int(y/32)*width+int(x/32)
                 x-=(x%32)
@@ -1160,6 +1149,7 @@ while running:
         HUD.blit(pg.transform.rotate(tsurface,-55),(15,HEI-62))
         
         #Debug Stats
+        avgFps = sum(fList)/len(fList)
         if ke[pg.K_r]:
             tsurface = smallfont.render(str(pl.xv),True,(230,230,230))
             HUD.blit(tsurface,(10,HEI-250))
@@ -1167,7 +1157,6 @@ while running:
             HUD.blit(tsurface,(10,HEI-265))
             tsurface = smallfont.render(str(pl.maxSpd),True,(230,230,230))
             HUD.blit(tsurface,(10,HEI-280))
-            avgFps = sum(fList)/len(fList)
             tsurface = smallfont.render(str(round(avgFps,2)) + " fps",True,(230,230,230))
             HUD.blit(tsurface,(10,HEI-295))
             tsurface = smallfont.render(str(round(1000/f,2)) + " fps",True,(230,230,230))
