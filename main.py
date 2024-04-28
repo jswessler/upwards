@@ -11,8 +11,8 @@ import time
 import heart
 
 gamePath = os.getcwd() #Path to game directory
-idealFps = 144 #Target FPS for the game to aim for
-buildId = "id148.1" #Build Identifier
+idealFps = 60 #Target FPS for the game to aim for
+buildId = "id148.2" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -152,7 +152,6 @@ class Player(pg.sprite.Sprite):
             #Air Transitions
 
             elif self.yv>-0.5 and (self.nextAni=='high' or self.nextAni=='low') and not self.onGround: #If we have a queued animation
-                print(self.aniiTimer)
                 #High Transition after Jump
                 if self.nextAni == 'high':
                     if self.aniiTimer < 0:
@@ -197,7 +196,7 @@ class Player(pg.sprite.Sprite):
                         self.aniFrame += 1
                         self.aniTimer = 3
                     if self.aniFrame > 4:
-                        self.nextAni = 'low'
+                        self.nextAni = 'mid'
                         self.aniiTimer = 13
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djump" + str(min(3,self.aniFrame)) + ".png"))
                     self.img = imgPos(self.img,self.dFacing)
@@ -299,7 +298,7 @@ class Player(pg.sprite.Sprite):
         #For complicated reasons physics targets 240fps.
         #If we're running below 240fps then we do multiple physics steps per drawn frame
         #We don't allow running above 240fps
-        
+        dtr = targetFps/60
         while self.dt>0:
             #Reduce jump hover counter
             if self.jCounter>0:

@@ -5,9 +5,13 @@ Requires: pygame > 2.3, numpy
 
 Release Log:
 
+id148.2
+- Debug fixes
+- Prep for physics overhaul (fork)
+
 id148.1
 * Tile updating now only occurs on-screen (about a 10% FPS gain)
-- Different collision detection objects can now have different debug colors to differentiate them
+- Different collision detection objects now have different debug colors to differentiate them
 - Reduced amount of collision detection to reduce lag
 - Fixed several animation problems when idealFps is not set to 60
 - Diving while having 0 x-velocity now sends you in the direction you're facing (as opposed to always right)
