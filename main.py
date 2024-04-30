@@ -12,7 +12,7 @@ import heart
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id148.3" #Build Identifier
+buildId = "id148.4" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -331,7 +331,6 @@ class Player(pg.sprite.Sprite):
                     eRegen*=1.125
                     self.energy+=0.0025
                     self.yv-=0.001
-                    self.xv+=0.001*self.facing
 
 
 
@@ -410,9 +409,8 @@ class Player(pg.sprite.Sprite):
                     if self.slide >= 190 and self.slideBoost == 0: #Sliding Boost
                         self.slideBoost = math.pow(90-(self.slide-190),2)
                     self.jCounter = (12 - (3 * self.abilities[0]))
-                    self.abilities[0] -= 0.25 if self.slideBoost == 0 else 0.5
-                    print(self.slideBoost)
-                    self.yv -= 0.35*(1+(self.slideBoost/3000)) + (0.025 * abs(self.xv))
+                    self.abilities[0] -= 0.25 if self.slideBoost == 0 else 1
+                    self.yv -= 0.345*(1+(self.slideBoost/2500)) + (0.025 * abs(self.xv))
                     self.animation = 'jump'
 
                 #Jump Extension
@@ -433,7 +431,9 @@ class Player(pg.sprite.Sprite):
 
                 
                 #Double Jump
-                if 0<self.abilities[2]<4 and not self.onGround and not self.wallClimb and self.abilities[0]<=0 and self.abilities[3]==2 and self.energy>0.8 and not self.wallClimb:
+
+                if 0<self.abilities[2]<4 and not self.onGround and not self.wallClimb and self.abilities[0]<=0 and self.abilities[3]==2 and self.energy>0.8:
+                    
                     if self.yv>0:
                         self.yv*=0.4
                     self.yv-=(0.325+0.0125*abs(self.xv))
@@ -475,7 +475,7 @@ class Player(pg.sprite.Sprite):
                     self.abilities[2]=0
                 
                 #Hop off of wall by letting go (fix for right-side wall jump)
-                self.wallclimb = False
+                self.wallClimb = False
 
                 #Slight hover at the end of jumps
                 if self.yv>-1 and self.jCounter>0:
