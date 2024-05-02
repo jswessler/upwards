@@ -9,10 +9,11 @@ import cv2
 import time
 
 import heart
+import sensor
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id148.4" #Build Identifier
+buildId = "id145.1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -305,7 +306,7 @@ class Player(pg.sprite.Sprite):
         #Do collision detection using 8 points scattered around your model
         for i in range(self.col[1]+7,20,32):
             for j in range(-14,19,32):
-                det,bl,st = se.detect(j,i,(180,0,180))
+                det,bl,st,circ = se.detect(j,i)
                 playerCollisionDetection(det,bl,st)
 
         #For complicated reasons physics targets 240fps.
@@ -337,7 +338,7 @@ class Player(pg.sprite.Sprite):
             #Object Collision Detection
 
             #Ground Collision (self.col[0] is the bottom of the model)
-            if any(se.detect(i,self.col[0],(0,80,250))[0]==1 for i in range(-21,29,8)):
+            if any(se.detect(i,self.col[0])[0]==1 for i in range(-21,29,8)):
                 if self.onGround==False:
                     self.ypos+=1
                     self.energy+=(5*eRegen)+0.5 #give you a bit of energy on landing
@@ -373,26 +374,30 @@ class Player(pg.sprite.Sprite):
                 self.onGround = False
                 self.timeOnGround = 0
                 self.gravity = 1
-                self.energy+=(eRegen/40*(max(0,self.yv)))
+
+                #Regen energy if falling quickly and you have >5 energy
+                if self.energy > 5:
+                    self.energy+= 0.012*(max(0,self.yv))
+
                 #Slide off an edge
                 if self.slide > 0:
-                    self.slide -= min(3,self.slide)
-                    self.jCounter = 2
-                    self.energy-=0.06
+                    self.slide -= min(5,self.slide)
+                    self.jCounter = 1
+                    self.energy-=0.075
                     
 
                 #Up detection (only run when not on ground)
-                if any(se.detect(i,self.col[1],(200,200,200))[0]==1 for i in range(-22,23,11)): #Up
+                if any(se.detect(i,self.col[1])[0]==1 for i in range(-22,23,11)): #Up
                     self.yv = 0
                     self.ypos+=1
                     self.jCounter=0
             
             #Right & Left Detection
             self.onWall=0
-            if any(se.detect(self.col[2],i,(200,100,0))[0]==1 for i in range(self.col[1]+10,11,25)): #Right
+            if any(se.detect(self.col[2],i)[0]==1 for i in range(self.col[1]+10,11,25)): #Right
                 self.onWall = 1
                 self.xv = 0
-            if any(se.detect(self.col[3],i,(200,100,0))[0]==1 for i in range(self.col[1]+10,11,25)): #Left
+            if any(se.detect(self.col[3],i)[0]==1 for i in range(self.col[1]+10,11,25)): #Left
                 self.onWall = -1
                 self.xv = 0
 
@@ -483,7 +488,7 @@ class Player(pg.sprite.Sprite):
                     self.gravity = 0.45
 
             #Wall slide 
-                if all(se.detect(self.facing*31,i,(140,140,0))[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0 and self.energy>0.24:
+                if all(se.detect(self.facing*31,i)[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0 and self.energy>0.24:
                     self.jCounter=2
                     if self.yv > 1.5:
                         self.yv = 1.5
@@ -651,7 +656,7 @@ class Kunai(pg.sprite.Sprite):
         self.timeHoming = 0
         self.baseImage = pg.image.load(os.path.join(gamePath,"Images", "UI", "pixelkunai.png"))
         self.baseImage = pg.transform.scale2x(self.baseImage)
-        self.kunaiSens = Sensor(self)
+        self.kunaiSens = sensor.Sensor(self,level,levelSub,width)
         self.direction = 0
     def update(self):
         global kunais
@@ -662,7 +667,7 @@ class Kunai(pg.sprite.Sprite):
         if not self.stuck:
             self.xpos += self.xv
             self.ypos += self.yv
-        if any(self.kunaiSens.detect(int(math.sin(i)*10),int(math.cos(i)*10),(255,20,0))[0]==1 for i in range(-3,3,1)):
+        if any(self.kunaiSens.detect(int(math.sin(i)*10),int(math.cos(i)*10))[0]==1 for i in range(-3,3,1)):
             #hit a wall
             self.stuck = True
             self.gravity = 0
@@ -681,25 +686,6 @@ class Kunai(pg.sprite.Sprite):
                 del(self)
         else:
             self.timeHoming = 0
-
-class Sensor(pg.sprite.Sprite):
-    def __init__(self,orig):
-        self.orig = orig
-    
-    def detect(self,x,y,color=(0,80,255)):
-        global camerax,cameray
-        xp = self.orig.xpos+x+self.orig.xv
-        yp = self.orig.ypos+y+self.orig.yv
-        block = (int(yp/32)*width)+int(xp/32)
-        ret = level[block]
-        subtype = levelSub[block]
-        if ke[pg.K_r]:
-            if ret!=0:
-                pg.draw.circle(screen,(0,255,0),(self.orig.xpos+x-camerax,self.orig.ypos+y-cameray),4)
-            else:
-                pg.draw.circle(screen,color,(self.orig.xpos+x-camerax,self.orig.ypos+y-cameray),4)
-        return ret,block,subtype
-
 
 #Level loading routine
 width = 0
@@ -930,7 +916,7 @@ textfont = pg.font.SysFont('Times New Roman',36)
 smallfont = pg.font.SysFont('Times New Roman',14)
 loadARL(loadFrom)
 pl = Player(spawn)
-se = Sensor(pl)
+se = sensor.Sensor(pl,level,levelSub,width)
 
 #Variable Setup
 camerax = cameray = 0

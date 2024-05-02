@@ -1,5 +1,9 @@
 Release Log:
 
+id152.1
+* Split Sensor class into its own file
+- Reduced sliding airtime
+
 id149.1
 - Moved changelog to a new file
 - Double jump glitch is gone
