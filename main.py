@@ -18,12 +18,12 @@ import mathFuncs.loadArl as loadARL
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id152.2" #Build Identifier
+buildId = "id153.1" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
-        self.xpos = 32*(math.floor(spawn/width))
-        self.ypos = 32*(spawn%width)
+        self.ypos = 32*(math.floor(spawn/width))
+        self.xpos = 32*(spawn%width)
         self.xv = 0
         self.yv = 0
         self.energy = 100
@@ -338,12 +338,10 @@ class Player(pg.sprite.Sprite):
                     self.energy+=0.0025
                     self.yv-=0.001
 
-
-
             #Object Collision Detection
 
             #Ground Collision (self.col[0] is the bottom of the model)
-            if any(se.detect(i,self.col[0])[0]==1 for i in range(-21,29,8)):
+            if any(se.detect(i,self.col[0])[0]==1 for i in range(-21,29,16)):
                 if self.onGround==False:
                     self.ypos+=1
                     self.energy+=(5*eRegen)+0.5 #give you a bit of energy on landing

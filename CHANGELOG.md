@@ -1,5 +1,9 @@
 Release Log:
 
+id153.1
+- Reduced bottom collision detection
+- Spawnpoints work properly
+
 id152.2
 * Split several functions into seperate files
 * Split Kunai into its own file

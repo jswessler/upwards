@@ -1,11 +1,10 @@
 import pygame as pg
 import os
 
-buildId = 'id152.2'
+buildId = 'id153.1'
 
 #Load ARL from a file
 def loadARL(filename,gamePath):
-    global level,levelSub,width,height,loadedTiles, spawn
     f = open(os.path.join(gamePath,"Levels",filename),'rb')
     bites = f.read()
     f.close()
