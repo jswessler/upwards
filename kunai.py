@@ -1,11 +1,12 @@
 import pygame as pg
-import math
-import os
+import sensor, os, math
+import mathFuncs.distFuncs as distF
 
-import sensor
+buildId = 'id152.2'
 
+#Kunai (throwing knife)
 class Kunai(pg.sprite.Sprite):
-    def __init__(self,xpos,ypos,xv,yv):
+    def __init__(self,xpos,ypos,xv,yv,gamePath,level,levelSub,width):
         self.xpos = xpos
         self.ypos = ypos
         self.xv = xv
@@ -18,10 +19,9 @@ class Kunai(pg.sprite.Sprite):
         self.baseImage = pg.transform.scale2x(self.baseImage)
         self.kunaiSens = sensor.Sensor(self,level,levelSub,width)
         self.direction = 0
-    def update(self):
-        global kunais
+    def update(self,plx,ply):
         self.timeAlive += 1
-        self.direction = cosTowardMouse(self.xv,self.yv)[2]
+        self.direction = distF.cos(self.xv,self.yv)[2]
         self.image = pg.transform.rotate(self.baseImage,-math.degrees(self.direction))
         self.yv += self.gravity
         if not self.stuck:
@@ -32,17 +32,22 @@ class Kunai(pg.sprite.Sprite):
             self.stuck = True
             self.gravity = 0
         else:
+            #else fly through the air with low gravity
             self.stuck = False
             self.gravity = 0.1
-        if getDist(self.xpos,self.ypos,pl.xpos,pl.ypos)<300 and self.timeAlive>60:
+        if distF.getDist(self.xpos,self.ypos,plx,ply)<300 and self.timeAlive>60:
             if self.timeHoming < 90:
                 self.timeHoming += 1
             self.stuck = False
-            self.xv = (self.xpos-pl.xpos)/-(18-(self.timeHoming/5))
-            self.yv = (self.ypos-pl.ypos+50)/-(18-(self.timeHoming/5))
-            if getDist(self.xpos,self.ypos,pl.xpos,pl.ypos)<60:
-                kunais+=1
-                spawnedKunai.pop(spawnedKunai.index(self))
+
+            #Retracts kunai to you when you get close. Effect gets stronger over 90 calls so its guarenteed to come back
+            self.xv = (self.xpos-plx)/-(18-(self.timeHoming/5))
+            self.yv = (self.ypos-ply+50)/-(18-(self.timeHoming/5)) #pl ypos + 50 so it goes to your head instead of feet
+
+            #Delete instance if kunai is right next to you
+            if distF.getDist(self.xpos,self.ypos,plx,ply)<60:
                 del(self)
+                return False
         else:
             self.timeHoming = 0
+        return True

@@ -1,5 +1,13 @@
 Release Log:
 
+id152.2
+* Split several functions into seperate files
+* Split Kunai into its own file
+- Level loading function is now real Python and actually returns stuff
+- HUD now shakes in x&y directions when falling quickly
+- Hex no longer refreshes every 10sec
+- Healing/Damage is now done locally in the heart script
+
 id152.1
 * Split Sensor class into its own file
 - Reduced sliding airtime

@@ -10,10 +10,15 @@ import time
 
 import heart
 import sensor
+import kunai
+
+import mathFuncs.distFuncs as distF
+import mathFuncs.imgFuncs as imgF
+import mathFuncs.loadArl as loadARL
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id145.1" #Build Identifier
+buildId = "id152.2" #Build Identifier
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn):
@@ -61,7 +66,7 @@ class Player(pg.sprite.Sprite):
             if self.aniTimer<0:
                 self.animation = 'none'
             self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","land.png"))
-            self.img = imgPos(self.img,self.dFacing)
+            self.img = imgF.imgPos(self.img,self.dFacing)
             self.imgPos = [-36,-94]
         
         #Hard Landing (11 frame animation with 3 images)
@@ -74,7 +79,7 @@ class Player(pg.sprite.Sprite):
                 self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hardland2.png"))
             else:
                 self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hardland3.png"))
-            self.img = imgPos(self.img,self.dFacing)
+            self.img = imgF.imgPos(self.img,self.dFacing)
             if self.aniTimer>11:
                 self.imgPos = [-34,-94]
             elif self.aniTimer>7:
@@ -94,10 +99,10 @@ class Player(pg.sprite.Sprite):
             if self.kunaiAni == 37: #Spawn a kunai on frame 37
                 kuAni = 0
                 #Determine direction
-                dx, dy, dir = cosTowardMouse(mousex-(self.xpos-camerax),mousey-(self.ypos-cameray))
+                dx, dy, dir = distF.cos(mousex-(self.xpos-camerax),mousey-(self.ypos-cameray))
                 dx+=random.uniform(-0.04,0.04)
                 dy+=random.uniform(-0.04,0.04)
-                spawnedKunai.append(Kunai(self.xpos,self.ypos-70,dx*30,dy*30))
+                spawnedKunai.append(kunai.Kunai(self.xpos,self.ypos-70,dx*30,dy*30,gamePath,level,levelSub,width))
             if self.kunaiAni < 1:
                 self.kunaiAni = 0
                 kunais-=1
@@ -111,7 +116,7 @@ class Player(pg.sprite.Sprite):
                         self.aniFrame=1
                     self.aniTimer = max(2,int(4.25-abs(self.xv)))
                 self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","run" + str(self.aniFrame) + ".png"))
-                self.img = imgPos(self.img,self.dFacing)
+                self.img = imgF.imgPos(self.img,self.dFacing)
                 self.imgPos = [-36,-94]
             
             #Idle (4 frame animation on a mod%60)
@@ -124,7 +129,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","idle3.png"))
                 else:
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","idle4.png"))
-                self.img = imgPos(self.img,self.dFacing)
+                self.img = imgF.imgPos(self.img,self.dFacing)
                 self.imgPos = [-26,-100]
         
 
@@ -152,7 +157,7 @@ class Player(pg.sprite.Sprite):
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hovernl" + str(self.aniFrame) + ".png"))
                     else:
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","hoverrl" + str(self.aniFrame) + ".png"))
-                self.img = imgPos(self.img,self.dFacing)
+                self.img = imgF.imgPos(self.img,self.dFacing)
                 self.imgPos = [-31,-102]
             #Air Transitions
 
@@ -166,7 +171,7 @@ class Player(pg.sprite.Sprite):
                         self.animation = 'falling'
                     #After 3 frames, go to standard falling animation
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","jumptrans" + str(int((18-self.aniiTimer)/5)) + ".png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-100]
                 
                 #Mid Transition after double jump
@@ -175,7 +180,7 @@ class Player(pg.sprite.Sprite):
                         self.nextAni = 'none'
                         self.animation = 'falling'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","lowtrans2.png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-100]
 
                 #Low transition after hover or dive jump
@@ -184,7 +189,7 @@ class Player(pg.sprite.Sprite):
                         self.nextAni = 'none'
                         self.animation = 'falling'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","lowtrans" + str(int((18-self.aniiTimer)/5)) + ".png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-100]
                 if self.aniiTimer < 0:
                     self.aniiTimer = 13 
@@ -200,7 +205,7 @@ class Player(pg.sprite.Sprite):
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","wallslide.png"))
                     else:
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","wallslide2.png"))
-                    self.img = imgPos(self.img,-self.dFacing)
+                    self.img = imgF.imgPos(self.img,-self.dFacing)
                     self.imgPos = [-26,-101]
 
             #Double Jump
@@ -213,7 +218,7 @@ class Player(pg.sprite.Sprite):
                         self.nextAni = 'mid'
                         self.aniiTimer = 13
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djump" + str(min(3,self.aniFrame)) + ".png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-84,-101]
                 
                 #Djump transition (when moving up)
@@ -227,7 +232,7 @@ class Player(pg.sprite.Sprite):
                         self.nextAni='djump'
                         self.animation='none'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djumpup" + str(min(2,self.aniFrame)) + ".png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-32,-125]
                 
                 #Djump transition (when moving down)
@@ -241,7 +246,7 @@ class Player(pg.sprite.Sprite):
                         self.nextAni = 'djump'
                         self.animation = 'none'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","djumpdown" + str(min(2,self.aniFrame)) + ".png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-104]
                     
                 #First Jump (2 frame animation on mod%30 that plays as long as you're moving up)
@@ -253,7 +258,7 @@ class Player(pg.sprite.Sprite):
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","jumpup1.png"))
                     else:
                         self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","jumpup2.png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-100]
                 
 
@@ -272,14 +277,14 @@ class Player(pg.sprite.Sprite):
                     if self.aniFrame>4:
                         self.aniFrame=1
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","flail" + str(self.aniFrame) + ".png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-116]
 
                 elif self.nextAni == 'fftrans':
                     if self.aniTimer < 0:
                         self.nextAni = 'fastfall'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","fftrans.png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-116]
 
                 #Falling
@@ -294,12 +299,12 @@ class Player(pg.sprite.Sprite):
                         self.nextAni='fftrans'
                         self.animation='none'
                     self.img = pg.image.load(os.path.join(gamePath,"Images","Aria","falling" + str(self.aniFrame) + ".png"))
-                    self.img = imgPos(self.img,self.dFacing)
+                    self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-116]
 
     #Run Every Frame
     def update(self,keys):
-        global kunais
+        global kunais, health, redrawHearts
         self.counter+=60/targetFps
         self.dt+=240/targetFps
 
@@ -327,8 +332,8 @@ class Player(pg.sprite.Sprite):
                 eRegen = 0.19
             else:
                 eRegen = max(0.005,0.0075 + (100-self.energy) / 250)
-            for heart in health:
-                if heart.type == 3 and heart.amt == 2:
+            for h in health:
+                if h.type == 3 and h.amt == 2:
                     eRegen*=1.125
                     self.energy+=0.0025
                     self.yv-=0.001
@@ -350,11 +355,12 @@ class Player(pg.sprite.Sprite):
                         self.animation = 'hardlanded'
                         self.maxSpd = 1.5
                         if self.yv > 7.75:
-                            dealDmg(3)
-                        elif self.yv > 6.5:
-                            dealDmg(2)
-                        elif self.yv > 5.75:
-                            dealDmg(1)
+                            health = heart.dealDmg(1,health)
+                        if self.yv > 6.5:
+                            health = heart.dealDmg(1,health)
+                        if self.yv > 5.75:
+                            health = heart.dealDmg(1,health)
+                            redrawHearts = True
                         
                 self.onGround = True
                 self.timeOnGround += 1
@@ -644,135 +650,11 @@ class Player(pg.sprite.Sprite):
             self.dt-=1
         pl.animations()
 
-class Kunai(pg.sprite.Sprite):
-    def __init__(self, xpos, ypos, xv, yv):
-        self.xpos = xpos
-        self.ypos = ypos
-        self.xv = xv
-        self.yv = yv
-        self.gravity = 0.1
-        self.stuck = False
-        self.timeAlive = 0
-        self.timeHoming = 0
-        self.baseImage = pg.image.load(os.path.join(gamePath,"Images", "UI", "pixelkunai.png"))
-        self.baseImage = pg.transform.scale2x(self.baseImage)
-        self.kunaiSens = sensor.Sensor(self,level,levelSub,width)
-        self.direction = 0
-    def update(self):
-        global kunais
-        self.timeAlive += 1
-        self.direction = cosTowardMouse(self.xv,self.yv)[2]
-        self.image = pg.transform.rotate(self.baseImage,-math.degrees(self.direction))
-        self.yv += self.gravity
-        if not self.stuck:
-            self.xpos += self.xv
-            self.ypos += self.yv
-        if any(self.kunaiSens.detect(int(math.sin(i)*10),int(math.cos(i)*10))[0]==1 for i in range(-3,3,1)):
-            #hit a wall
-            self.stuck = True
-            self.gravity = 0
-        else:
-            self.stuck = False
-            self.gravity = 0.1
-        if getDist(self.xpos,self.ypos,pl.xpos,pl.ypos)<300 and self.timeAlive>60:
-            if self.timeHoming < 90:
-                self.timeHoming += 1
-            self.stuck = False
-            self.xv = (self.xpos-pl.xpos)/-(18-(self.timeHoming/5))
-            self.yv = (self.ypos-pl.ypos+50)/-(18-(self.timeHoming/5))
-            if getDist(self.xpos,self.ypos,pl.xpos,pl.ypos)<60:
-                kunais+=1
-                spawnedKunai.pop(spawnedKunai.index(self))
-                del(self)
-        else:
-            self.timeHoming = 0
 
-#Level loading routine
-width = 0
-height = 0
-startx = 0
-starty = 0
-spawn = -1
+
+#Level loading routine for now :)
 loadFrom = 'lvl1.arl'
-def loadARL(filename):
-    global level,levelSub,width,height,loadedTiles, spawn
-    f = open(os.path.join(gamePath,"Levels",filename),'rb')
-    bites = f.read()
-    f.close()
-    counter = 0
-    cou = 0
-    width = 10
-    height = 10
-    while cou<(len(bites))-6:
-        byte = bites[cou]
-        if counter==4: #Headers
-            width+=byte*256
-        if counter==5:
-            width+=byte
-        if counter==6:
-            height+=byte*256
-        if counter==7:
-            height+=byte
-        if counter==8:
-            width-=10
-            height-=10
-            lv = [0] * (width*height)
-            lv2 = [0] * (width*height)
-        if counter>63: #Data
-            #If block is 0-0, skip ahead RLE bytes
-            if byte==0:
-                cou+=1
-                byte = bites[cou]
-                counter+=byte-1
-            #Otherwise, add the block to the list
-            else:
-                lv.insert(counter-64,byte)
-                cou+=1
-                byte = bites[cou]
-                lv2.insert(counter-64,byte)
-            if lv[counter-64] == 5 and lv2[counter-64] == 0:
-                spawn = counter - 64
-                
-        counter+=1
-        cou+=1
-    level = lv
-    levelSub = lv2
-    bCounter = 0
-    blocks = []
-    for bl in level:
-        if bl!=0:
-            blocks.append((bl*256)+levelSub[bCounter])
-        bCounter+=1
-
-    #Converting to set to see which blocks to load
-    loadedTiles = ['']*65536
-    setBlock = set(blocks)
-    for i in setBlock:
-        try:
-            loadedTiles[i] = pg.image.load(os.path.join(gamePath,"Images", "Tiles", str(int(i/256)) + "-" + str(int(i%256)) + ".png"))
-        except:
-            pass
-
-#Scale & Flip player images properly
-def imgPos(img,fac):
-    img = pg.transform.scale_by(img,2)
-    if fac==-1:
-        img = pg.transform.flip(img,True,False)
-    return img
-
-#Get angle based on relative x and y
-def cosTowardMouse(relx,rely):
-    dir = math.atan2(rely,relx)
-    yf = math.sin(dir)
-    xf = math.cos(dir)
-    return xf,yf,dir
-
-#Get distance between 2 points
-def getDist(ix,iy,dx,dy):
-    fx = dx-ix
-    fy = dy-iy
-    final = math.sqrt((fx**2)+(fy**2))
-    return final
+level,levelSub,loadedTiles,width,height,spawn = loadARL.loadARL(loadFrom,gamePath)
 
 #Camera moving algorithm
 def moveCamera(mousex,mousey,rxy=0):
@@ -787,8 +669,8 @@ def moveCamera(mousex,mousey,rxy=0):
         camy = mousey
     
     #Adjust camera parameters
-    tx = pl.xpos+(pl.xv*128)+(pl.dFacing*128)-(WID/2)+(camx-WID/2)/3
-    ty = -(HEI/10)+pl.ypos+(min(0,pl.yv*24))-(HEI/2)+(camy-HEI/2)/3
+    tx = pl.xpos+(pl.xv*120)+(pl.dFacing*120)-(WID/2)+(camx-WID/2)/2.5
+    ty = -(HEI/10)+pl.ypos+(min(0,pl.yv*24))-(HEI/2)+(camy-HEI/2)/2.5
     remcx = camerax
     remcy = cameray
     camerax += (tx-camerax)*0.0575*(60/targetFps)+random.uniform(-rxy,rxy)
@@ -798,7 +680,7 @@ def moveCamera(mousex,mousey,rxy=0):
 
 #Defines collision detection between player and interactable objects (not walls)
 def playerCollisionDetection(type,block,subtype):
-    global level,levelSub,nextCall,triggerPhone,redrawHearts
+    global level,levelSub,nextCall,triggerPhone,redrawHearts,health
     #Blocks are 1-3
 
     #Dash Crystal
@@ -809,7 +691,8 @@ def playerCollisionDetection(type,block,subtype):
             pl.abilities[4] = 2
             pl.energy = 100
             setLevelBlock(block,6,(subtype*10)+30)
-            heal(1)
+            health = heart.healDmg(1,health)
+            redrawHearts = True
     
     #Maintinence
     if type == 5:
@@ -830,7 +713,7 @@ def playerCollisionDetection(type,block,subtype):
 
     #Red Heart
     elif type == 9:
-        heal(subtype)
+        health = heart.healDmg(subtype,health)
         setLevelBlock(block,0,0)
         redrawHearts = True
 
@@ -853,19 +736,11 @@ def setLevelBlock(block,lvl,sLvl):
     level[block]=lvl
     levelSub[block]=sLvl
 
-#Return a list of x and y ranges that are on screen (coordinates, divide by 32 to get block numbers)
-def getOnScreen():
-    xs = max(0, int(camerax - 24))
-    xf = min(width * 32, int((camerax + WID + 24)))
-    ys = max(0, int(cameray - 24))
-    yf = min(height * 32, int((cameray + HEI + 24)))
-    xl = list(range(xs,xf,32))
-    yl = list(range(ys,yf,32))
-    return xl,yl
+
 
 #Changes on-screen tile properties such as dash crystal cooldown
 def tileProperties(mod):
-    xl,yl = getOnScreen()
+    xl,yl = distF.getOnScreen(camerax,cameray,width,height,WID,HEI)
     yf = yl[int((mod/8)*len(yl)): int(((mod+1)/8)*len(yl))] #Only cover 1/8 of the screen per call
     for x in xl:
         for y in yf:
@@ -879,24 +754,6 @@ def tileProperties(mod):
                 else:
                     level[counter]=4
                     levelSub[counter]=0
-
-#Deals damage to hearts in order
-def dealDmg(amt):
-    global redrawHearts
-    for heart in reversed(health):
-        amt-=heart.takeDmg(amt)
-    for heart in health:
-        if heart.amt==0 and heart.type!=1:
-            #Do blood heart logic here
-            health.pop(health.index(heart))
-    redrawHearts=True
-
-#Heals red & silver hearts
-def heal(amt):
-    global redrawHearts
-    for heart in health:
-        amt-=heart.heal(amt)
-    redrawHearts=True
         
 #Main Init
 pg.init()
@@ -914,7 +771,6 @@ kuAni = -1
 fps = pg.time.Clock()
 textfont = pg.font.SysFont('Times New Roman',36)
 smallfont = pg.font.SysFont('Times New Roman',14)
-loadARL(loadFrom)
 pl = Player(spawn)
 se = sensor.Sensor(pl,level,levelSub,width)
 
@@ -940,6 +796,10 @@ counter = 0 #frame counter
 kunaiImg = pg.image.load(os.path.join(gamePath,"Images","UI","kunai.png"))
 kunaiImg = pg.transform.rotate(kunaiImg,-4.289)
 kunaiImg = pg.transform.smoothscale_by(kunaiImg,0.15)
+
+#Draw Hearts & Hex
+hexImg = pg.image.load(os.path.join(gamePath,"Images","UI","hex.png"))
+hexImg = pg.transform.smoothscale_by(hexImg,0.25)
 
 #Main Game Loop
 while running:
@@ -1053,9 +913,11 @@ while running:
             screen.blit(pl.img,((pl.xpos-camerax+pl.imgPos[0])*gameScale,(pl.ypos-cameray+pl.imgPos[1])*gameScale))
 
         #Draw Kunais & do Kunai physics
-        for kunai in spawnedKunai:
-            kunai.update()
-            screen.blit(kunai.image,((kunai.xpos-camerax)*gameScale,(kunai.ypos-cameray)*gameScale))
+        for ku in spawnedKunai:
+            if not ku.update(pl.xpos,pl.ypos):
+                spawnedKunai.pop(spawnedKunai.index(ku))
+                kunais += 1
+            screen.blit(ku.image,((ku.xpos-camerax)*gameScale,(ku.ypos-cameray)*gameScale))
         
         #Draw HUD Kunais
         for i in range(0,kunais):
@@ -1071,8 +933,6 @@ while running:
                     HUD.blit(kunaiImg,(WID-152-(i*38)+(kuAni*2.3),HEI-154-(i*3)+(kuAni/5)))
                 else:
                     HUD.blit(kunaiImg,(WID-100-(i*38),HEI-150-(i*3)))
-
-
         if kuAni!=-1:
             kuAni+=1
         if kuAni >= 40:
@@ -1080,7 +940,7 @@ while running:
 
         #Draw Blocks
         re=0
-        xl,yl = getOnScreen()
+        xl,yl = distF.getOnScreen(camerax,cameray,width,height,WID,HEI)
         for x in xl:
             for y in yl:
                 re+=1
@@ -1151,13 +1011,6 @@ while running:
             if mouseUIInteract and not pg.mouse.get_pressed()[0] and not ke[pg.K_ESCAPE]:
                 mouseUIInteract = False
 
-
-
-        #Draw Hearts & Hex
-        if counter%600==0:
-            hexImg = pg.image.load(os.path.join(gamePath,"Images","UI","hex.png"))
-            hexImg = pg.transform.smoothscale_by(hexImg,0.25)
-
         HUD.blit(hexImg,(10,HEI-210))
 
         c=0
@@ -1223,7 +1076,7 @@ while running:
                 pg.surfarray.blit_array(out, out_rgb)
             screen.blit(out,(0,max(0,-pl.yv*6)),None,1)
         else:
-            screen.blit(HUD,((-diffcx*4,max(0,-pl.yv*6))))
+            screen.blit(HUD,((-diffcx*4,(-pl.yv*6 if pl.yv < 0 else 0 if pl.yv < 4 else (-diffcy+4)*4))))
         screen.blit(boxLayer,(0,0))
         screen.blit(text,(0,0))
 

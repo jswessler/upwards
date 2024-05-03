@@ -1,8 +1,5 @@
 import pygame as pg
-import math
-import time
-import numpy as np
-import os
+import math, time, os
 from pygame import gfxdraw
 
 path = os.getcwd()

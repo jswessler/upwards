@@ -1,6 +1,25 @@
-import os
+import pygame as pg
 
-class Heart():
+buildId = 'id152.2'
+
+#Deals damage to hearts in order
+def dealDmg(amt,health):
+    for hp in reversed(health):
+        amt-=hp.takeDmg(amt)
+    for hp in health:
+        if hp.amt==0 and hp.type!=1:
+            #Do blood heart logic here
+            health.pop(health.index(hp))
+    return health
+
+#Heals red & silver hearts
+def healDmg(amt,health):
+    for hp in health:
+        amt-=hp.heal(amt)
+    return health
+
+
+class Heart(pg.sprite.Sprite):
     def __init__(self,typ,amt):
         self.type = typ
         self.amt = amt
@@ -27,7 +46,6 @@ class Heart():
 
     #Deal damage to heart. We pass in an amount of damage to take, and return how much we absorbed
     def takeDmg(self,amt):
-
         #Return how much dmg was absorbed
         if amt>self.amt:
             temp = self.amt
