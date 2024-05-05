@@ -1,5 +1,10 @@
 Release Log:
 
+id155.1
+* Moved player class into its own file
+- Cleaned up kunai spawning and heart code
++ Known Issue - Heart UI doesn't appear until you take damage or heal
+
 id153.1
 - Reduced bottom collision detection
 - Spawnpoints work properly

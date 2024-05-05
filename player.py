@@ -1,15 +1,18 @@
 import pygame as pg
 
-import math,os,kunai
+import math,os,kunai,sensor,heart
+import sensor
 
 import mathFuncs.distFuncs as distF
 import mathFuncs.imgFuncs as imgF
 
-buildId = 'id153.1'
+
+
+buildId = 'id155.1'
 class Player(pg.sprite.Sprite):
-    def __init__(self,spawn,width,gamePath):
-        self.xpos = 32*(math.floor(spawn/width))
-        self.ypos = 32*(spawn%width)
+    def __init__(self,spawn,width,gamePath,level,levelSub):
+        self.ypos = 32*(math.floor(spawn/width))
+        self.xpos = 32*(spawn%width)
         self.xv = 0
         self.yv = 0
         self.energy = 100
@@ -36,6 +39,7 @@ class Player(pg.sprite.Sprite):
         self.kunaiAni = 0
         self.slideMult = 0
         self.gamePath = gamePath
+        self.se = sensor.Sensor(self,level,levelSub,width)
 
         #Collision Boxes. bottom, top, right, left (in that order)
         self.col = [12,-100,30,-25]
@@ -45,6 +49,8 @@ class Player(pg.sprite.Sprite):
         if self.aniTimer>=0:
             self.aniTimer-=float(60/targetFps)
         self.aniiTimer-=float(60/targetFps)
+        if self.kunaiAni > 0:
+            self.kunaiAni -= 1
 
         #Tumble Landing
         
@@ -79,20 +85,6 @@ class Player(pg.sprite.Sprite):
 
 
         #Ground Animations
-
-        #Throwing Kunai (not implemented, currently just locks your animation for 40 frames)
-        if self.kunaiAni > 0:
-            self.kunaiAni -= 1
-            if self.kunaiAni == 37: #Spawn a kunai on frame 37
-                kuAni = 0
-                #Determine direction
-                dx, dy, dir = distF.cos(mousex-(self.xpos-camerax),mousey-(self.ypos-cameray))
-                dx+=random.uniform(-0.04,0.04)
-                dy+=random.uniform(-0.04,0.04)
-                spawnedKunai.append(kunai.Kunai(self.xpos,self.ypos-70,dx*30,dy*30,self.gamePath,level,levelSub,width))
-            if self.kunaiAni < 1:
-                self.kunaiAni = 0
-                kunais-=1
 
         elif self.onGround:
             #Run (17 frame animation, 1 aniframe per 4.25-2 frames depening on speed)
@@ -290,16 +282,10 @@ class Player(pg.sprite.Sprite):
                     self.imgPos = [-31,-116]
 
     #Run Every Frame
-    def update(self,keys):
-        global kunais, health, redrawHearts
+    def update(self,keys,targetFps,health):
         self.counter+=60/targetFps
         self.dt+=240/targetFps
-
-        #Do collision detection using 8 points scattered around your model
-        for i in range(self.col[1]+7,20,32):
-            for j in range(-14,19,32):
-                det,bl,st,circ = se.detect(j,i)
-                playerCollisionDetection(det,bl,st)
+        rdH = False #redraw hearts (communication with main loop)
 
         #For complicated reasons physics targets 240fps.
         #If we're running below 240fps then we do multiple physics steps per drawn frame
@@ -330,7 +316,7 @@ class Player(pg.sprite.Sprite):
             #Object Collision Detection
 
             #Ground Collision (self.col[0] is the bottom of the model)
-            if any(se.detect(i,self.col[0])[0]==1 for i in range(-21,29,8)):
+            if any(self.se.detect(i,self.col[0])[0]==1 for i in range(-21,29,8)):
                 if self.onGround==False:
                     self.ypos+=1
                     self.energy+=(5*eRegen)+0.5 #give you a bit of energy on landing
@@ -347,7 +333,7 @@ class Player(pg.sprite.Sprite):
                             health = heart.dealDmg(1,health)
                         if self.yv > 5.75:
                             health = heart.dealDmg(1,health)
-                            redrawHearts = True
+                            rdH = True
                         
                 self.onGround = True
                 self.timeOnGround += 1
@@ -380,17 +366,17 @@ class Player(pg.sprite.Sprite):
                     
 
                 #Up detection (only run when not on ground)
-                if any(se.detect(i,self.col[1])[0]==1 for i in range(-22,23,11)): #Up
+                if any(self.se.detect(i,self.col[1])[0]==1 for i in range(-22,23,11)): #Up
                     self.yv = 0
                     self.ypos+=1
                     self.jCounter=0
             
             #Right & Left Detection
             self.onWall=0
-            if any(se.detect(self.col[2],i)[0]==1 for i in range(self.col[1]+10,11,25)): #Right
+            if any(self.se.detect(self.col[2],i)[0]==1 for i in range(self.col[1]+10,11,25)): #Right
                 self.onWall = 1
                 self.xv = 0
-            if any(se.detect(self.col[3],i)[0]==1 for i in range(self.col[1]+10,11,25)): #Left
+            if any(self.se.detect(self.col[3],i)[0]==1 for i in range(self.col[1]+10,11,25)): #Left
                 self.onWall = -1
                 self.xv = 0
 
@@ -481,7 +467,7 @@ class Player(pg.sprite.Sprite):
                     self.gravity = 0.45
 
             #Wall slide 
-                if all(se.detect(self.facing*31,i)[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0 and self.energy>0.24:
+                if all(self.se.detect(self.facing*31,i)[0]==1 for i in range(-70,10,30)) and not self.onGround and self.facing!=0 and self.energy>0.24:
                     self.jCounter=2
                     if self.yv > 1.5:
                         self.yv = 1.5
@@ -522,10 +508,7 @@ class Player(pg.sprite.Sprite):
                     self.animation = 'jump' #change this to 'dive' when dive animation is implemented
                 
             #Kunai Spawning on e or click
-            if kunais > 0 and self.kunaiAni<18 and self.energy>20 and (ke[pg.K_e] or pg.mouse.get_pressed()[0]):
-                if self.kunaiAni!=0:
-                    kunais-=1
-                    self.energy-=6
+            if self.kunaiAni<18 and self.energy>20 and (keys[pg.K_e] or pg.mouse.get_pressed()[0]):
                 self.kunaiAni = 40
                 self.energy-=12
                 #self.animation = 'none' #change this to throwing animation
@@ -635,4 +618,5 @@ class Player(pg.sprite.Sprite):
             self.xpos+=self.xv
             self.ypos+=self.yv
             self.dt-=1
-        self.animations()
+        self.animations(targetFps)
+        return rdH
