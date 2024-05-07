@@ -1,7 +1,12 @@
 Release Log:
 
+id157.1
+- Added requirements.txt
+- Made kunai HUD animations work again (mostly)
+- Kunai collision improvements
+
 id155.1
-* Moved player class into its own file
+* Moved player class into its own file (finally)
 - Cleaned up kunai spawning and heart code
 + Known Issue - Heart UI doesn't appear until you take damage or heal
 

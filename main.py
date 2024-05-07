@@ -1,17 +1,8 @@
 import pygame as pg
-import math
 from time import process_time
-import numpy as np
-from pygame import gfxdraw
-import random
-import os
-import cv2
-import time
+import random,os,math
 
-import heart
-import sensor
-import kunai
-import player
+import heart,sensor,kunai,player,button
 
 import mathFuncs.distFuncs as distF
 import mathFuncs.imgFuncs as imgF
@@ -19,7 +10,7 @@ import mathFuncs.loadArl as loadARL
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id155.1" #Build Identifier
+buildId = "id157.1" #Build Identifier
 
 #Level loading routine for now :)
 loadFrom = 'lvl1.arl'
@@ -205,7 +196,13 @@ while running:
         if resumeTimer<=0:
             state = 'game'
 
-    #In-Game Loop
+    #Main Menu
+    if state == 'menu': 
+        pass
+
+
+
+    #MAIN GAME LOOP
     if state == 'game' or state == 'resuming' or state == 'pause' or state == 'phonecall':
         #Handle Phone Calls
         if nextCall>=1:
@@ -292,6 +289,7 @@ while running:
             dy += random.uniform(-0.04,0.04)
             spawnedKunai.append(kunai.Kunai(pl.xpos,pl.ypos-60,dx*30,dy*30,gamePath,level,levelSub,width))
             kunais -= 1
+            kuAni = 0
             pl.energy -= 12 #id155.1 moved from player to main
         for ku in spawnedKunai:
             if not ku.update(pl.xpos,pl.ypos):
@@ -443,22 +441,7 @@ while running:
 
 
         targetFps=min(idealFps,avgFps)
-        threeDee=False
-        #Rendering 3D Hud
-        if threeDee:
-            if counter%1==0:
-                dst = np.float32([[0,0],[WID,0],[HEI,0],[WID,HEI]])
-                w, h = HUD.get_size()
-                pts = np.float32([[(-pl.yv/4-diffcy)*2,(-pl.xv/4-diffcx)*2],[WID+((pl.yv/4+diffcy)*4),(pl.xv/4+diffcx)*2],[WID-((pl.yv/4+diffcy)*4),HEI-((pl.xv/4+diffcx)*4)],[(pl.yv/4+diffcy)*2,HEI+((pl.xv/4+diffcx)*4)]])
-                src_corners = np.float32([(0, 0), (0, w), (h, w), (h, 0)])
-                mat = cv2.getPerspectiveTransform(src_corners, np.float32([(p[1],p[0]) for p in pts]))
-                buf_rgb = pg.surfarray.array3d(HUD)
-                out_rgb = cv2.warpPerspective(buf_rgb, mat, (HEI,WID), flags=cv2.INTER_LINEAR)
-                out = pg.Surface(out_rgb.shape[0:2], pg.SRCALPHA)
-                pg.surfarray.blit_array(out, out_rgb)
-            screen.blit(out,(0,max(0,-pl.yv*6)),None,1)
-        else:
-            screen.blit(HUD,((-diffcx*4,(-pl.yv*6 if pl.yv < 0 else 0 if pl.yv < 4 else (-diffcy+4)*4))))
+        screen.blit(HUD,((-diffcx*4,(-pl.yv*6 if pl.yv < 0 else 0 if pl.yv < 4 else (-diffcy+4)*4))))
         screen.blit(boxLayer,(0,0))
         screen.blit(text,(0,0))
 

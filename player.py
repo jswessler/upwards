@@ -8,7 +8,7 @@ import mathFuncs.imgFuncs as imgF
 
 
 
-buildId = 'id155.1'
+buildId = 'id156.1'
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn,width,gamePath,level,levelSub):
         self.ypos = 32*(math.floor(spawn/width))

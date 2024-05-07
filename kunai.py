@@ -2,7 +2,7 @@ import pygame as pg
 import sensor, os, math
 import mathFuncs.distFuncs as distF
 
-buildId = 'id152.2'
+buildId = 'id157.1'
 
 #Kunai (throwing knife)
 class Kunai(pg.sprite.Sprite):
@@ -27,7 +27,7 @@ class Kunai(pg.sprite.Sprite):
         if not self.stuck:
             self.xpos += self.xv
             self.ypos += self.yv
-        if any(self.kunaiSens.detect(int(math.sin(i)*10),int(math.cos(i)*10))[0]==1 for i in range(-3,3,1)):
+        if any(self.kunaiSens.detect(int(math.sin(i)*12)+6,int(math.cos(i)*12)+10)[0]==1 for i in range(-3,3,1)):
             #hit a wall
             self.stuck = True
             self.gravity = 0
