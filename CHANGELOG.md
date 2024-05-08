@@ -1,5 +1,11 @@
 Release Log:
 
+id157.2
+* Added sliding animation (2 frame loop, 2 frames transition out)
+* Particle class (not implemented yet, just coded)
+- Fixed a lot of problems with sliding
+- Increased time needed to reset max ground speed
+
 id157.1
 - Added requirements.txt
 - Made kunai HUD animations work again (mostly)

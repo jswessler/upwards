@@ -2,7 +2,7 @@ import pygame as pg
 import sensor, os, math
 import mathFuncs.distFuncs as distF
 
-buildId = 'id157.1'
+buildId = 'id157.2'
 
 #Kunai (throwing knife)
 class Kunai(pg.sprite.Sprite):
@@ -46,7 +46,7 @@ class Kunai(pg.sprite.Sprite):
 
             #Delete instance if kunai is right next to you
             if distF.getDist(self.xpos,self.ypos,plx,ply)<60:
-                del(self)
+                del (self)
                 return False
         else:
             self.timeHoming = 0

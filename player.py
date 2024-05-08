@@ -1,14 +1,13 @@
 import pygame as pg
 
-import math,os,kunai,sensor,heart
+import math,os,sensor,heart,particle
 import sensor
 
-import mathFuncs.distFuncs as distF
 import mathFuncs.imgFuncs as imgF
 
 
 
-buildId = 'id156.1'
+buildId = 'id157.2'
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn,width,gamePath,level,levelSub):
         self.ypos = 32*(math.floor(spawn/width))
@@ -46,6 +45,7 @@ class Player(pg.sprite.Sprite):
     
     def animations(self,targetFps):
         global kunais,kuAni
+        particles = [] #reset particle list
         if self.aniTimer>=0:
             self.aniTimer-=float(60/targetFps)
         self.aniiTimer-=float(60/targetFps)
@@ -87,12 +87,30 @@ class Player(pg.sprite.Sprite):
         #Ground Animations
 
         elif self.onGround:
+            if self.animation == 'slide' and abs(self.xv)>0.5:
+                #Main sliding loop
+                if self.slide > 221:
+                    if self.counter%12 < 6:
+                        self.img = pg.image.load(os.path.join(self.gamePath,"Images","Aria","slide1.png"))
+                    else:
+                        self.img = pg.image.load(os.path.join(self.gamePath,"Images","Aria","slide2.png"))
+                    self.img = imgF.imgPos(self.img,self.dFacing)
+                    self.imgPos = [-36,-86]
+
+                #Slide exit transition
+                else:
+                    self.img = pg.image.load(os.path.join(self.gamePath,"Images","Aria",("slideout1.png" if self.slide > 210 else "slideout2.png")))
+                    self.img = imgF.imgPos(self.img,self.dFacing)
+                    self.imgPos = [-36,-86]
             #Run (17 frame animation, 1 aniframe per 4.25-2 frames depening on speed)
-            if self.animation=='run' or abs(self.xv)>0.35:
-                if self.aniTimer<0:
-                    self.aniFrame+=1
-                    if self.aniFrame==18:
-                        self.aniFrame=1
+            elif self.animation == 'run' or abs(self.xv) > 0.35:
+                if self.aniTimer < 0:
+                    self.aniFrame += 1
+                    if self.aniFrame == 18:
+                        self.aniFrame = 1
+                        particles.append(particle.Particle(self.xpos,self.ypos,'run',self.dFacing,self.gamePath))
+                    if self.aniFrame == 9:
+                        particles.append(particle.Particle(self.xpos,self.ypos,'run',self.dFacing,self.gamePath))
                     self.aniTimer = max(2,int(4.25-abs(self.xv)))
                 self.img = pg.image.load(os.path.join(self.gamePath,"Images","Aria","run" + str(self.aniFrame) + ".png"))
                 self.img = imgF.imgPos(self.img,self.dFacing)
@@ -280,7 +298,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.image.load(os.path.join(self.gamePath,"Images","Aria","falling" + str(self.aniFrame) + ".png"))
                     self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-116]
-
+        return particles
     #Run Every Frame
     def update(self,keys,targetFps,health):
         self.counter+=60/targetFps
@@ -363,6 +381,7 @@ class Player(pg.sprite.Sprite):
                     self.slide -= min(5,self.slide)
                     self.jCounter = 1
                     self.energy-=0.075
+                    self.nextAni = 'low'
                     
 
                 #Up detection (only run when not on ground)
@@ -393,8 +412,11 @@ class Player(pg.sprite.Sprite):
                     if self.slide >= 190 and self.slideBoost == 0: #Sliding Boost
                         self.slideBoost = math.pow(90-(self.slide-190),2)
                     self.jCounter = (12 - (3 * self.abilities[0]))
-                    self.abilities[0] -= 0.25 if self.slideBoost == 0 else 1
-                    self.yv -= 0.345*(1+(self.slideBoost/2500)) + (0.025 * abs(self.xv))
+                    self.abilities[0] -= 0.25
+                    self.yv -= 0.34 + (self.slideBoost/50000) + (0.025 * abs(self.xv))
+                    if self.slideBoost != 0:
+                        self.energy-=0.25
+                        self.xv *= 1+self.slideBoost/250000
                     self.animation = 'jump'
 
                 #Jump Extension
@@ -519,48 +541,51 @@ class Player(pg.sprite.Sprite):
             #On the ground, you have a lot more traction
             if self.onGround:
                 if keys[pg.K_a] or keys[pg.K_LEFT] and self.onWall!=-1:
-                    self.xv-=0.1225
+                    self.xv-=0.122
                     self.facing = -1
                     self.animation='run'
-                    if self.maxSpd<2.75:
+                    if self.maxSpd<2.8:
                         self.maxSpd+=0.004
                 elif keys[pg.K_d] or keys[pg.K_RIGHT] and self.onWall!=1:
-                    self.xv+=0.1225
+                    self.xv+=0.122
                     self.facing = 1
                     self.animation='run'
-                    if self.maxSpd<2.75:
+                    if self.maxSpd<2.8:
                         self.maxSpd+=0.004
                 else:
-                    if self.maxSpd>1.9:
-                        self.maxSpd-=0.02
+                    if self.maxSpd>1.8:
+                        self.maxSpd-=0.0125
                 self.xv*=0.96
                 if self.facing == 0 or self.facing / self.xv<0:
                     self.maxSpd = 2
                 
                 #Slide
-                if (keys[pg.K_s] or keys[pg.K_DOWN]) and abs(self.xv)>1.6 and self.energy > 15 and (self.slide == 0 or self.slide > 200):
+                if (keys[pg.K_s] or keys[pg.K_DOWN]) and abs(self.xv)>1.75 and self.energy > 15 and (self.slide == 0 or self.slide > 200):
                     self.col = [12,-40,30,-25]
                     if self.timeOnGround < 15 and self.slideMult == 0:
                         self.slideMult = 1.5
+                        self.energy += 17.5
                     else:
                         self.slideMult = 1
-                    self.maxSpd = 3.25*self.slideMult
-                    if 0 < self.xv < 3.25*self.slideMult:
-                        self.xv += 0.45*self.slideMult
-                    elif -3.25*self.slideMult < self.xv < 0:
-                        self.xv -= 0.45*self.slideMult
+                    self.maxSpd = 3.5*self.slideMult
+                    if 0 < self.xv < 3.5*self.slideMult:
+                        self.xv += 0.55*self.slideMult
+                    elif -3.5*self.slideMult < self.xv < 0:
+                        self.xv -= 0.55*self.slideMult
                     if self.slide == 0:
                         self.xv *= 1.5 * self.slideMult
                         self.slide = 280
-                        self.energy -= 5
+                        self.energy -= 12.5
                 else:
                     self.col = [12,-100,30,-25]
                 if self.slide > 0:
                     self.slide -= 1
                     if self.slide < 200:
                         self.slideMult = 0
+                        self.animation = 'run'
                     else:
                         self.energy-=0.24
+                        self.animation = 'slide'
 
             #In the air you have a lot less traction
             else:
@@ -618,5 +643,5 @@ class Player(pg.sprite.Sprite):
             self.xpos+=self.xv
             self.ypos+=self.yv
             self.dt-=1
-        self.animations(targetFps)
-        return rdH
+        p = self.animations(targetFps)
+        return rdH,p

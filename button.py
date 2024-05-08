@@ -1,9 +1,9 @@
 import pygame as pg
 
-buildId = 'id156.1'
+buildId = 'id157.2'
 
 #Clicky button
-#Creidt to Patryk Karbowy on stackoverflow)
+#Credit to Patryk Karbowy on stackoverflow
 class Button(pg.sprite.Sprite):
     def __init__(self, color, x, y, width, height, text=''):
         self.color = color

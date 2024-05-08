@@ -2,7 +2,7 @@ import pygame as pg
 from time import process_time
 import random,os,math
 
-import heart,sensor,kunai,player,button
+import heart,sensor,kunai,player,button,particle
 
 import mathFuncs.distFuncs as distF
 import mathFuncs.imgFuncs as imgF
@@ -10,7 +10,7 @@ import mathFuncs.loadArl as loadARL
 
 gamePath = os.getcwd() #Path to game directory
 idealFps = 60 #Target FPS for the game to aim for
-buildId = "id157.1" #Build Identifier
+buildId = "id157.2" #Build Identifier
 
 #Level loading routine for now :)
 loadFrom = 'lvl1.arl'
@@ -126,6 +126,7 @@ state = 'game'
 f=1
 fList = [idealFps]
 spawnedKunai = []
+particles = []
 kunais = 5
 kuAni = -1
 fps = pg.time.Clock()
@@ -176,7 +177,9 @@ while running:
 
     #Only if the physics are running
     if state=='game':
-        redrawHearts = pl.update(ke,targetFps,health) #Do Physics
+        redrawHearts,p = pl.update(ke,targetFps,health) #Do Physics
+        for i in p: #for each generated particle, add it to the list
+            particles.append(i)
         tileProperties(counter%8) #Update Tiles (1/8 of the scren at a time)
         moveCamera(mousex,mousey,max(0,(pl.yv-2.5))) #Handle Camera Movement
     elif state=='phonecall' and boxWidth>width:
@@ -280,6 +283,13 @@ while running:
             for j in range(-14,19,32):
                 det,bl,st,circ = se.detect(j,i)
                 playerCollisionDetection(det,bl,st)
+
+        #Draw Particles
+        for i in particles:
+            if i.update():
+                particles.pop(particles.index(i))
+            else:
+                screen.blit(i.img,((i.xpos+i.xoffset-camerax)*gameScale,(i.ypos+i.yoffset-cameray)*gameScale))
 
         #Draw Kunais & do Kunai physics
         #Spawn kunai (moved from player to main in id153.2)
