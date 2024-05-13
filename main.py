@@ -9,8 +9,8 @@ import mathFuncs.imgFuncs as imgF
 import mathFuncs.loadArl as loadARL
 
 gamePath = os.getcwd() #Path to game directory
-idealFps = 60 #Target FPS for the game to aim for
-buildId = "id157.2" #Build Identifier
+maxFps = 60 #Target FPS for the game to aim for
+buildId = "id163.1" #Build Identifier
 
 #Level loading routine for now :)
 loadFrom = 'lvl1.arl'
@@ -33,8 +33,8 @@ def moveCamera(mousex,mousey,rxy=0):
     ty = -(HEI/10)+pl.ypos+(min(0,pl.yv*24))-(HEI/2)+(camy-HEI/2)/2.5
     remcx = camerax
     remcy = cameray
-    camerax += (tx-camerax)*0.0575*(60/targetFps)+random.uniform(-rxy,rxy)
-    cameray += (ty-cameray)*0.125*(60/targetFps)+random.uniform(-rxy,rxy)+(-16 if ke[pg.K_w] else 4 if ke[pg.K_s] else 0)
+    camerax += (tx-camerax)*0.0575*(60/actualFps)+random.uniform(-rxy,rxy)
+    cameray += (ty-cameray)*0.125*(60/actualFps)+random.uniform(-rxy,rxy)+(-16 if ke[pg.K_w] else 16 if ke[pg.K_s] and not pl.onGround else 0)
     diffcx = (-math.sqrt(abs(camerax-remcx)) if camerax-remcx<0 else math.sqrt(camerax-remcx))
     diffcy = (-math.sqrt(abs(cameray-remcy)) if cameray-remcy<0 else math.sqrt(cameray-remcy))
 
@@ -124,7 +124,7 @@ screen = pg.display.set_mode((WID,HEI),pg.DOUBLEBUF|pg.RESIZABLE,vsync=True)
 running = True
 state = 'game'
 f=1
-fList = [idealFps]
+fList = [maxFps]
 spawnedKunai = []
 particles = []
 kunais = 5
@@ -141,6 +141,7 @@ triggerPhone = False
 phoneCounter = 0
 nextCall = 0
 waitCounter = 2
+dt = 1 #id158.1 delta time physics calculation
 phoneX = 0
 phoneY = 0
 currentText = []
@@ -148,8 +149,8 @@ mouseUIInteract = False
 redrawHearts = True
 resumeTimer = 0
 boxWidth = 0 #text box width (0 is invisible)
-targetFps = 60
-avgFps = 60
+actualFps = 60
+avgFps = actualFps
 health = [heart.Heart(1,4),heart.Heart(1,3)] #Two full red hearts
 counter = 0 #frame counter
 
@@ -177,7 +178,7 @@ while running:
 
     #Only if the physics are running
     if state=='game':
-        redrawHearts,p = pl.update(ke,targetFps,health) #Do Physics
+        redrawHearts,p = pl.update(ke,actualFps,health,kunais) #Do Physics
         for i in p: #for each generated particle, add it to the list
             particles.append(i)
         tileProperties(counter%8) #Update Tiles (1/8 of the scren at a time)
@@ -273,7 +274,7 @@ while running:
                             boxWidth = 0
                             state = 'game'
                 else:
-                    waitCounter-=1*(240/targetFps)
+                    waitCounter-=1*(240/actualFps)
                 
                 
         #Draw Player
@@ -360,14 +361,14 @@ while running:
             if counter%2==0:
                 phoneImg = pg.image.load(os.path.join(gamePath,"Images","Phone","phone" + str(1+int((counter%6)/2)) + ".png"))
                 phoneImg = pg.transform.scale_by(phoneImg,max(2,min(4,7-phoneCounter/10)))
-            if phoneCounter>380*(idealFps/60):
+            if phoneCounter>380*(maxFps/60):
                 triggerPhone=False
-            elif phoneCounter>360*(idealFps/60):
-                phoneX += (WID-20-phoneX)*0.125*(60/targetFps)
-                phoneY += (30-phoneY)*0.125*(60/targetFps)
-            elif phoneCounter>30*(idealFps/60):
-                phoneX += (pl.xpos-camerax-phoneX-13)*0.2*(60/targetFps)+random.uniform(-2,2)
-                phoneY += (pl.ypos-cameray-phoneY-170)*0.2*(60/targetFps)+random.uniform(-2,2)
+            elif phoneCounter>360*(maxFps/60):
+                phoneX += (WID-20-phoneX)*0.125*(60/actualFps)
+                phoneY += (30-phoneY)*0.125*(60/actualFps)
+            elif phoneCounter>30*(maxFps/60):
+                phoneX += (pl.xpos-camerax-phoneX-13)*0.2*(60/actualFps)+random.uniform(-2,2)
+                phoneY += (pl.ypos-cameray-phoneY-170)*0.2*(60/actualFps)+random.uniform(-2,2)
             else:
                 phoneX=WID-80
                 phoneY=15
@@ -433,7 +434,6 @@ while running:
         HUD.blit(pg.transform.rotate(tsurface,-55),(15,HEI-62))
         
         #Debug Stats
-        avgFps = sum(fList)/len(fList)
         if ke[pg.K_r]:
             tsurface = smallfont.render(str(pl.xv),True,(230,230,230))
             HUD.blit(tsurface,(10,HEI-250))
@@ -449,18 +449,21 @@ while running:
             if (4*HEI/10)<mousey<(6*HEI/10) and (4*WID/10)<mousex<(6*WID/10):
                 pg.draw.rect(screen,(60,60,60),pg.Rect(4*WID/10,4*HEI/10,WID/5,HEI/5),3)
 
+        #FPS Measurements
+        avgFps = sum(fList)/len(fList)
+        actualFps=min(maxFps,avgFps)
 
-        targetFps=min(idealFps,avgFps)
-        screen.blit(HUD,((-diffcx*4,(-pl.yv*6 if pl.yv < 0 else 0 if pl.yv < 4 else (-diffcy+4)*4))))
+        #Draw everything to the screen layer
+        screen.blit(HUD,((-diffcx*4,(-pl.yv*7 if pl.yv < 0 else 0 if pl.yv < 4 else (-diffcy+4)*4))))
         screen.blit(boxLayer,(0,0))
         screen.blit(text,(0,0))
 
 
     #End time, processing FPS
-    fps.tick(targetFps)
+    dt = fps.tick(actualFps)
     f = fps.get_rawtime()
     fList.append(1000/f)
-    if len(fList)>(targetFps*2):
+    if len(fList)>(actualFps/4):
         fList.pop(0)
     pg.display.flip()
     #time.sleep(0.1)

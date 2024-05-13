@@ -1,5 +1,11 @@
 Release Log:
 
+id163.1
+- Pressing S only pans the camera down when in the air
+- Slide cancels when going too slowly
+- Fixed going into negative kunais
+- Fixes for framerates other than 60
+
 id157.2
 * Added sliding animation (2 frame loop, 2 frames transition out)
 * Particle class (not implemented yet, just coded)

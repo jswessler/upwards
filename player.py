@@ -7,7 +7,8 @@ import mathFuncs.imgFuncs as imgF
 
 
 
-buildId = 'id157.2'
+buildId = 'id163.1'
+
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn,width,gamePath,level,levelSub):
         self.ypos = 32*(math.floor(spawn/width))
@@ -43,12 +44,12 @@ class Player(pg.sprite.Sprite):
         #Collision Boxes. bottom, top, right, left (in that order)
         self.col = [12,-100,30,-25]
     
-    def animations(self,targetFps):
+    def animations(self,fps):
         global kunais,kuAni
         particles = [] #reset particle list
         if self.aniTimer>=0:
-            self.aniTimer-=float(60/targetFps)
-        self.aniiTimer-=float(60/targetFps)
+            self.aniTimer-=float(60/fps)
+        self.aniiTimer-=float(60/fps)
         if self.kunaiAni > 0:
             self.kunaiAni -= 1
 
@@ -86,8 +87,10 @@ class Player(pg.sprite.Sprite):
 
         #Ground Animations
 
+        #Slide (id157.2)
         elif self.onGround:
             if self.animation == 'slide' and abs(self.xv)>0.5:
+
                 #Main sliding loop
                 if self.slide > 221:
                     if self.counter%12 < 6:
@@ -102,6 +105,7 @@ class Player(pg.sprite.Sprite):
                     self.img = pg.image.load(os.path.join(self.gamePath,"Images","Aria",("slideout1.png" if self.slide > 210 else "slideout2.png")))
                     self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-36,-86]
+
             #Run (17 frame animation, 1 aniframe per 4.25-2 frames depening on speed)
             elif self.animation == 'run' or abs(self.xv) > 0.35:
                 if self.aniTimer < 0:
@@ -158,7 +162,9 @@ class Player(pg.sprite.Sprite):
                 self.imgPos = [-31,-102]
             #Air Transitions
 
+            #Queued air animation
             elif self.yv>-0.5 and (self.nextAni=='high' or self.nextAni=='low') and not self.onGround: #If we have a queued animation
+                
                 #High Transition after Jump
                 if self.aniiTimer<-1:
                     self.aniiTimer = 13
@@ -166,6 +172,7 @@ class Player(pg.sprite.Sprite):
                     if self.aniiTimer < 0:
                         self.nextAni = 'none'
                         self.animation = 'falling'
+
                     #After 3 frames, go to standard falling animation
                     self.img = pg.image.load(os.path.join(self.gamePath,"Images","Aria","jumptrans" + str(int((18-self.aniiTimer)/5)) + ".png"))
                     self.img = imgF.imgPos(self.img,self.dFacing)
@@ -299,23 +306,26 @@ class Player(pg.sprite.Sprite):
                     self.img = imgF.imgPos(self.img,self.dFacing)
                     self.imgPos = [-31,-116]
         return particles
+    
     #Run Every Frame
-    def update(self,keys,targetFps,health):
-        self.counter+=60/targetFps
-        self.dt+=240/targetFps
+    def update(self,keys,fps,health,kunais):
+        self.counter+=60/fps
+        self.dt+=240/fps
         rdH = False #redraw hearts (communication with main loop)
 
         #For complicated reasons physics targets 240fps.
         #If we're running below 240fps then we do multiple physics steps per drawn frame
         #We don't allow running above 240fps
-        dtr = targetFps/60
         while self.dt>0:
+
             #Reduce jump hover counter
             if self.jCounter>0:
                 self.jCounter-=0.25
+
             #Incrase energy if it ends up below 0 (somehow)
             if self.energy<0:
                 self.energy+=0.1
+
             #Energy calculations
             if self.energy < 20:
                 eRegen = (self.energy / 105)+0.005
@@ -328,10 +338,6 @@ class Player(pg.sprite.Sprite):
                     eRegen*=1.125
                     self.energy+=0.0025
                     self.yv-=0.001
-
-
-
-            #Object Collision Detection
 
             #Ground Collision (self.col[0] is the bottom of the model)
             if any(self.se.detect(i,self.col[0])[0]==1 for i in range(-21,29,8)):
@@ -352,7 +358,6 @@ class Player(pg.sprite.Sprite):
                         if self.yv > 5.75:
                             health = heart.dealDmg(1,health)
                             rdH = True
-                        
                 self.onGround = True
                 self.timeOnGround += 1
 
@@ -431,7 +436,7 @@ class Player(pg.sprite.Sprite):
                     self.yv-=0.015
                     self.yv*=0.97
                     self.jCounter=1
-                    self.energy-=(0.06+(0.0125*abs(self.xv)))
+                    self.energy-=(0.07+(0.0125*abs(self.xv)))
 
                     self.animation = 'hover'
 
@@ -494,7 +499,7 @@ class Player(pg.sprite.Sprite):
                     if self.yv > 1.5:
                         self.yv = 1.5
                     self.wallClimb = True
-                    self.energy-=0.04
+                    self.energy-=0.02
                     self.animation = 'wallslide'
                     self.nextAni = 'none'
                 elif self.animation == 'wallslide':
@@ -530,7 +535,7 @@ class Player(pg.sprite.Sprite):
                     self.animation = 'jump' #change this to 'dive' when dive animation is implemented
                 
             #Kunai Spawning on e or click
-            if self.kunaiAni<18 and self.energy>20 and (keys[pg.K_e] or pg.mouse.get_pressed()[0]):
+            if self.kunaiAni<18 and self.energy>20 and kunais > 0 and (keys[pg.K_e] or pg.mouse.get_pressed()[0]):
                 self.kunaiAni = 40
                 self.energy-=12
                 #self.animation = 'none' #change this to throwing animation
@@ -586,6 +591,10 @@ class Player(pg.sprite.Sprite):
                     else:
                         self.energy-=0.24
                         self.animation = 'slide'
+                
+                #Slide cancels if you're not moving (id158.1)
+                if self.slide > 0 and abs(self.xv) < 1:
+                    self.slide -= min(32,self.slide)
 
             #In the air you have a lot less traction
             else:
@@ -642,6 +651,6 @@ class Player(pg.sprite.Sprite):
             #Updating x & y pos
             self.xpos+=self.xv
             self.ypos+=self.yv
-            self.dt-=1
-        p = self.animations(targetFps)
+            self.dt -= 1
+        p = self.animations(fps)
         return rdH,p
