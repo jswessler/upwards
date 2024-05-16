@@ -1,5 +1,10 @@
 Release Log:
 
+id166.1
+- Pause button introduced
+- Does nothing at the moment
+- Bug Fixes
+
 id163.1
 - Pressing S only pans the camera down when in the air
 - Slide cancels when going too slowly

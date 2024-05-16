@@ -1,6 +1,6 @@
 import pygame as pg
 
-buildId = 'id152.2'
+buildId = 'id166.1'
 
 class Sensor(pg.sprite.Sprite):
     def __init__(self,orig,level,levelSub,width): #Sensors are reset on loading a new level so its okay to put lvl data here
@@ -15,6 +15,5 @@ class Sensor(pg.sprite.Sprite):
         block = (int(yp/32)*self.wid)+int(xp/32) #Find block in the level data (x*lvl width + y)
         ret = self.lvl[block] #Block type
         subtype = self.lvls[block] #Block subtype
-        #Circle to draw when shown
-        circ = [self.orig.xpos+x,self.orig.ypos+y]
+        circ = [self.orig.xpos+x,self.orig.ypos+y] #Circle to draw when shown
         return [ret,block,subtype,circ]

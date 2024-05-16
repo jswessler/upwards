@@ -8,9 +8,12 @@ import mathFuncs.distFuncs as distF
 import mathFuncs.imgFuncs as imgF
 import mathFuncs.loadArl as loadARL
 
+# import heartrate
+# heartrate.trace(browser=True)
+
 gamePath = os.getcwd() #Path to game directory
 maxFps = 60 #Target FPS for the game to aim for
-buildId = "id163.1" #Build Identifier
+buildId = "id166.1" #Build Identifier
 
 #Level loading routine for now :)
 loadFrom = 'lvl1.arl'
@@ -125,8 +128,11 @@ running = True
 state = 'game'
 f=1
 fList = [maxFps]
+
 spawnedKunai = []
 particles = []
+buttons = []
+
 kunais = 5
 kuAni = -1
 fps = pg.time.Clock()
@@ -148,7 +154,7 @@ currentText = []
 mouseUIInteract = False
 redrawHearts = True
 resumeTimer = 0
-boxWidth = 0 #text box width (0 is invisible)
+tboxWidth = 0 #text box width (0 is invisible)
 actualFps = 60
 avgFps = actualFps
 health = [heart.Heart(1,4),heart.Heart(1,3)] #Two full red hearts
@@ -167,8 +173,9 @@ hexImg = pg.transform.smoothscale_by(hexImg,0.25)
 while running:
     mousex,mousey = pg.mouse.get_pos()
     HUD = pg.Surface((WID,HEI),pg.SRCALPHA)
-    boxLayer = pg.Surface((WID,HEI),pg.SRCALPHA)
+    textboxLayer = pg.Surface((WID,HEI),pg.SRCALPHA)
     text = pg.Surface((WID,HEI),pg.SRCALPHA)
+    buttonLayer = pg.Surface((WID,HEI),pg.SRCALPHA)
     WID,HEI = pg.display.get_surface().get_size()
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -179,11 +186,11 @@ while running:
     #Only if the physics are running
     if state=='game':
         redrawHearts,p = pl.update(ke,actualFps,health,kunais) #Do Physics
-        for i in p: #for each generated particle, add it to the list
+        for i in p: #for each generated particle, add it to the main list
             particles.append(i)
         tileProperties(counter%8) #Update Tiles (1/8 of the scren at a time)
         moveCamera(mousex,mousey,max(0,(pl.yv-2.5))) #Handle Camera Movement
-    elif state=='phonecall' and boxWidth>width:
+    elif state=='phonecall' and tboxWidth>width:
         moveCamera(mousex,mousey)
         if line>-1:
             tsurface = textfont.render(str(textName),True,(230,230,230))
@@ -191,11 +198,9 @@ while running:
         for i in range(0,len(currentText)):
             tsurface = textfont.render(str(currentText[i]),True,(230,230,230))
             text.blit(tsurface,(70,HEI-270+(i*50)))
-    elif state=='pause':
-        pass
     elif state=='resuming':
         moveCamera(mousex,mousey)
-        pg.draw.line(screen,(230,40,40),(pl.xpos-camerax,pl.ypos-cameray),(pl.xpos-camerax+(20*pl.xv),pl.ypos-cameray+(20*pl.yv)),4)
+        pg.draw.line(buttonLayer,(230,40,40),(pl.xpos-camerax,pl.ypos-cameray-40),(pl.xpos-camerax+(20*pl.xv),pl.ypos-cameray-40+(20*pl.yv)),4)
         resumeTimer-=1
         if resumeTimer<=0:
             state = 'game'
@@ -204,21 +209,29 @@ while running:
     if state == 'menu': 
         pass
 
-
+    #Pause Menu (id165.1)
+    if state == 'pause':
+        for i in buttons:
+            r,t = i.draw()
+            pg.draw.rect(buttonLayer, (i.color),r,0,6)
+            buttonLayer.blit(t,(i.x,i.y))
+            if i.isOver((mousex,mousey)) and pg.mouse.get_pressed()[0]:
+                state == i.name
+                resumeTimer = 15
 
     #MAIN GAME LOOP
     if state == 'game' or state == 'resuming' or state == 'pause' or state == 'phonecall':
         #Handle Phone Calls
         if nextCall>=1:
-            boxRect = pg.Rect(50,HEI-300,boxWidth,250)
-            nameRect = pg.Rect(50,HEI-400,min(150,boxWidth),75)
-            pg.draw.rect(boxLayer,(0,0,0),boxRect,0,25)
-            pg.draw.rect(boxLayer,(230,230,230),boxRect,5,25)
-            pg.draw.rect(boxLayer,(0,0,0),nameRect,0,25)
-            pg.draw.rect(boxLayer,(230,230,230),nameRect,5,25)
+            boxRect = pg.Rect(50,HEI-300,tboxWidth,250)
+            nameRect = pg.Rect(50,HEI-400,min(150,tboxWidth),75)
+            pg.draw.rect(textboxLayer,(0,0,0),boxRect,0,25)
+            pg.draw.rect(textboxLayer,(230,230,230),boxRect,5,25)
+            pg.draw.rect(textboxLayer,(0,0,0),nameRect,0,25)
+            pg.draw.rect(textboxLayer,(230,230,230),nameRect,5,25)
             state = 'phonecall'
-            if boxWidth<WID-100:
-                boxWidth+=64
+            if tboxWidth<WID-100:
+                tboxWidth+=64
                 lineCounter = 0
                 charCounter = 0
                 line = -1
@@ -226,7 +239,7 @@ while running:
                 textName = ''
                 currentText = ['','','']
             else:
-                boxWidth=WID-100
+                tboxWidth=WID-100
                 if txt==[]:
                     f = open(os.path.join(gamePath,"Phone Calls", str(int(nextCall)) + ".txt"),'r')
                     txt = f.read()
@@ -271,7 +284,7 @@ while running:
                         if ke[pg.K_RETURN] or ke[pg.K_z]:
                             currentText = ['','','']
                             nextCall = 0
-                            boxWidth = 0
+                            tboxWidth = 0
                             state = 'game'
                 else:
                     waitCounter-=1*(240/actualFps)
@@ -280,20 +293,21 @@ while running:
         #Draw Player
         if pl.img!='':
             screen.blit(pl.img,((pl.xpos-camerax+pl.imgPos[0])*gameScale,(pl.ypos-cameray+pl.imgPos[1])*gameScale))
+        
+        #Internal collision detection (for interactable blocks)
         for i in range(pl.col[1]+7,20,32):
             for j in range(-14,19,32):
                 det,bl,st,circ = se.detect(j,i)
                 playerCollisionDetection(det,bl,st)
 
-        #Draw Particles
+        #Draw & Update Particles
         for i in particles:
             if i.update():
                 particles.pop(particles.index(i))
             else:
                 screen.blit(i.img,((i.xpos+i.xoffset-camerax)*gameScale,(i.ypos+i.yoffset-cameray)*gameScale))
 
-        #Draw Kunais & do Kunai physics
-        #Spawn kunai (moved from player to main in id153.2)
+        #Spawn kunai (moved to main id153.2)
         if pl.kunaiAni == 37:
             dx,dy,dir = distF.cos(mousex-(pl.xpos-camerax),mousey-(pl.ypos-cameray))
             dx += random.uniform(-0.04,0.04)
@@ -302,6 +316,8 @@ while running:
             kunais -= 1
             kuAni = 0
             pl.energy -= 12 #id155.1 moved from player to main
+        
+        #Draw Kunais & do Kunai physics
         for ku in spawnedKunai:
             if not ku.update(pl.xpos,pl.ypos):
                 spawnedKunai.pop(spawnedKunai.index(ku))
@@ -388,7 +404,9 @@ while running:
             if ((phoneRect.collidepoint(pg.mouse.get_pos()) and pg.mouse.get_pressed()[0]) or ke[pg.K_ESCAPE]) and not mouseUIInteract:
                 mouseUIInteract = True
                 if state!='pause':
-                    state = 'pause'   
+                    state = 'pause'
+                    #Generate pause buttons (put animations here)
+                    buttons = [button.Button((200,200,200),(WID/2)-80,(HEI/3),250,50,'Resume Game','resuming')]
                 else:
                     state = 'resuming'
                     resumeTimer = 15
@@ -428,7 +446,8 @@ while running:
         for j in range(0,10):
             for i in range(0,20):
                 pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (220-(pl.energy*6),40+(pl.energy*6),40) if pl.energy<30 else (40,300-pl.energy,-400+(pl.energy*6)) if pl.energy>80 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
-        
+        #what the FUCK is this line
+
         #BuildId
         tsurface = smallfont.render(str(buildId),True,(230,230,230))
         HUD.blit(pg.transform.rotate(tsurface,-55),(15,HEI-62))
@@ -445,6 +464,7 @@ while running:
             HUD.blit(tsurface,(10,HEI-295))
             tsurface = smallfont.render(str(round(1000/f,2)) + " fps",True,(230,230,230))
             HUD.blit(tsurface,(10,HEI-310))
+
             #Draw a center box (only on R press as of id versions)
             if (4*HEI/10)<mousey<(6*HEI/10) and (4*WID/10)<mousex<(6*WID/10):
                 pg.draw.rect(screen,(60,60,60),pg.Rect(4*WID/10,4*HEI/10,WID/5,HEI/5),3)
@@ -455,8 +475,9 @@ while running:
 
         #Draw everything to the screen layer
         screen.blit(HUD,((-diffcx*4,(-pl.yv*7 if pl.yv < 0 else 0 if pl.yv < 4 else (-diffcy+4)*4))))
-        screen.blit(boxLayer,(0,0))
+        screen.blit(textboxLayer,(0,0))
         screen.blit(text,(0,0))
+        screen.blit(buttonLayer,(0,0))
 
 
     #End time, processing FPS
