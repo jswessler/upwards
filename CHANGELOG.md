@@ -1,5 +1,9 @@
 Release Log:
 
+id181.1
+* Hud now slides in/out depending on certain conditions
+- Fixed kunai HUD animation
+
 id 17x.1
 - No major changes
 

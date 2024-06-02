@@ -7,7 +7,7 @@ import mathFuncs.imgFuncs as imgF
 
 
 
-buildId = 'id163.1'
+buildId = 'id181.1'
 
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn,width,gamePath,level,levelSub):
@@ -45,7 +45,6 @@ class Player(pg.sprite.Sprite):
         self.col = [12,-100,30,-25]
     
     def animations(self,fps):
-        global kunais,kuAni
         particles = [] #reset particle list
         if self.aniTimer>=0:
             self.aniTimer-=float(60/fps)

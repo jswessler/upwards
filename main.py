@@ -13,7 +13,7 @@ import mathFuncs.loadArl as loadARL
 
 gamePath = os.getcwd() #Path to game directory
 maxFps = 60 #Target FPS for the game to aim for
-buildId = "id166.1" #Build Identifier
+buildId = "id181.1" #Build Identifier
 
 #Level loading routine for now :)
 loadFrom = 'lvl1.arl'
@@ -99,8 +99,6 @@ def setLevelBlock(block,lvl,sLvl):
     level[block]=lvl
     levelSub[block]=sLvl
 
-
-
 #Changes on-screen tile properties such as dash crystal cooldown
 def tileProperties(mod):
     xl,yl = distF.getOnScreen(camerax,cameray,width,height,WID,HEI)
@@ -159,6 +157,16 @@ actualFps = 60
 avgFps = actualFps
 health = [heart.Heart(1,4),heart.Heart(1,3)] #Two full red hearts
 counter = 0 #frame counter
+
+#for hud movement calcs
+rpx = 0
+rpy = 0 
+dpm = 0
+hexFade = 0.1
+hexStopCounter = 60
+hexReappear = True
+energyStopCounter = 60
+energyFade = 0.1
 
 #Loading & Scaling kunai image
 kunaiImg = pg.image.load(os.path.join(gamePath,"Images","UI","kunai.png"))
@@ -294,7 +302,7 @@ while running:
         if pl.img!='':
             screen.blit(pl.img,((pl.xpos-camerax+pl.imgPos[0])*gameScale,(pl.ypos-cameray+pl.imgPos[1])*gameScale))
         
-        #Internal collision detection (for interactable blocks)
+        #Player internal collision detection (for interactable blocks)
         for i in range(pl.col[1]+7,20,32):
             for j in range(-14,19,32):
                 det,bl,st,circ = se.detect(j,i)
@@ -313,9 +321,10 @@ while running:
             dx += random.uniform(-0.04,0.04)
             dy += random.uniform(-0.04,0.04)
             spawnedKunai.append(kunai.Kunai(pl.xpos,pl.ypos-60,dx*30,dy*30,gamePath,level,levelSub,width))
-            kunais -= 1
             kuAni = 0
             pl.energy -= 12 #id155.1 moved from player to main
+        if pl.kunaiAni == 1: #id181.1 seperated this to fix animation
+            kunais -= 1
         
         #Draw Kunais & do Kunai physics
         for ku in spawnedKunai:
@@ -323,25 +332,6 @@ while running:
                 spawnedKunai.pop(spawnedKunai.index(ku))
                 kunais += 1
             screen.blit(ku.image,((ku.xpos-camerax)*gameScale,(ku.ypos-cameray)*gameScale))
-        
-        #Draw HUD Kunais
-        for i in range(0,kunais):
-            kunaiImg.set_alpha(255)
-            if i == 0:
-                if 0<=kuAni<=14:
-                    kunaiImg.set_alpha(255-(kuAni*15))
-                    HUD.blit(kunaiImg,(WID-100-(i*38)+kuAni,HEI-150-(i*3)-(kuAni*kuAni+kuAni)))
-                elif kuAni >= 39 or kuAni == -1:
-                    HUD.blit(kunaiImg,(WID-100-(i*38),HEI-150-(i*3)))
-            else:   
-                if 24<=kuAni<=40:
-                    HUD.blit(kunaiImg,(WID-152-(i*38)+(kuAni*2.3),HEI-154-(i*3)+(kuAni/5)))
-                else:
-                    HUD.blit(kunaiImg,(WID-100-(i*38),HEI-150-(i*3)))
-        if kuAni!=-1:
-            kuAni+=1
-        if kuAni >= 40:
-            kuAni = -1
 
         #Draw Blocks
         re=0
@@ -414,17 +404,32 @@ while running:
             HUD.blit(phoneImg,(WID-80,15))
             phoneX=WID-80
             phoneY=15
+
             #Fix for spamclicking
             if mouseUIInteract and not pg.mouse.get_pressed()[0] and not ke[pg.K_ESCAPE]:
                 mouseUIInteract = False
 
-        #Draw Hex
-        HUD.blit(hexImg,(10,HEI-210))
+        #Draw HUD (heavily updated with id181.1)
+        #Leftside HUD
+        if redrawHearts: #Slide out when you're moving
+            hexStopCounter = counter + 180
+        if (counter < hexStopCounter): #Slide in after 60 frames of not moving or change in health bar
+            hexFade *= (0.6 if hexFade > 600 else 0.89)
+            hexReappear = True
+        else:
+            hexFade *= 1.15
+            if hexFade > 1200:
+                hexFade = 1200
+        if hexFade < 0.1:
+            hexFade = 0.1
+            hexReappear = False
+        HUD.blit(hexImg,(10-hexFade,HEI-210+(hexFade/12)))
 
         #Draw Hearts
         c=0
         for hp in health:
             if redrawHearts:
+                hexReapper = True
                 try:
                     hp.setImg(pg.image.load(os.path.join(gamePath,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png")))
                 except:
@@ -432,25 +437,53 @@ while running:
                 hp.img = pg.transform.scale_by(hp.img,4)
                 hp.img = pg.transform.rotate(hp.img,4.289)
             try:
-                HUD.blit(hp.img,(180+(68*c),HEI-77-(c*5.1)))
+                HUD.blit(hp.img,(180+(68*c)-hexFade,HEI-77-(c*5.1)+(hexFade/12)))
             except:
                 pass
             c+=1
         redrawHearts=False
 
+        #BuildId
+        tsurface = smallfont.render(str(buildId),True,(230,230,230))
+        HUD.blit(pg.transform.rotate(tsurface,-55),(15-hexFade,HEI-62+(hexFade/12)))
 
+        #Rightside HUD
+        if not pl.onGround or pl.energy < 95: 
+            energyStopCounter = counter + 45
+        if counter > energyStopCounter:    
+            energyFade *= 1.15
+            if energyFade > 300:
+                energyFade = 300
+        else:
+            energyFade *= 0.9
+        if energyFade < 0.1:
+            energyFade = 0.1
+
+        #Draw HUD Kunais
+        for i in range(0,kunais):
+            kunaiImg.set_alpha(255)
+            if i == 0:
+                if 0<=kuAni<=14:
+                    kunaiImg.set_alpha(255-(kuAni*15))
+                    HUD.blit(kunaiImg,(WID-100-(i*38)+kuAni+energyFade,HEI-150-(i*3)+(energyFade/12)-(kuAni*kuAni+kuAni)))
+                elif kuAni >= 39 or kuAni == -1:
+                    HUD.blit(kunaiImg,(WID-100-(i*38)+energyFade,HEI-150-(i*3)+(energyFade/12)))
+            else:   
+                if 24<=kuAni<=40:
+                    HUD.blit(kunaiImg,(WID-152-(i*38)+energyFade+(kuAni*2.3),HEI-154-(i*3)+(energyFade/12)+(kuAni/5)))
+                else:
+                    HUD.blit(kunaiImg,(WID-100-(i*38)+energyFade,HEI-150-(i*3)+(energyFade/12)))
+        if kuAni!=-1:
+            kuAni+=1
+        if kuAni >= 40:
+            kuAni = -1
         
-        #HUD
-
         #Energy Bar
         for j in range(0,10):
             for i in range(0,20):
-                pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (220-(pl.energy*6),40+(pl.energy*6),40) if pl.energy<30 else (40,300-pl.energy,-400+(pl.energy*6)) if pl.energy>80 else (40,220,40), (WID-20-i-(22*j),HEI-55-(j*1.666)-(i/13.333)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j),HEI-20-(j*1.666)-(i/13.333)-(1 if i==0 or i==19 else 0)))
+                pg.draw.aaline(HUD,(60,60,60) if 10*j+(i/2)>=pl.energy else (220-(pl.energy*6),40+(pl.energy*6),40) if pl.energy<30 else (40,300-pl.energy,-400+(pl.energy*6)) if pl.energy>80 else (40,220,40), (WID-20-i-(22*j)+int(energyFade),HEI-55-(j*1.666)-(i/13.333)+int(energyFade/12)+(1 if i==0 or i==19 else 0)),(WID-20-i-(22*j)+int(energyFade),HEI-20-(j*1.666)-(i/13.333)+int(energyFade/12)-(1 if i==0 or i==19 else 0)))
         #what the FUCK is this line
-
-        #BuildId
-        tsurface = smallfont.render(str(buildId),True,(230,230,230))
-        HUD.blit(pg.transform.rotate(tsurface,-55),(15,HEI-62))
+        
         
         #Debug Stats
         if ke[pg.K_r]:
