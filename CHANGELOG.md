@@ -1,5 +1,8 @@
 Release Log:
 
+id-arc
+- Changes to HUD sliding
+
 id181.1
 * Hud now slides in/out depending on certain conditions
 - Fixed kunai HUD animation

@@ -13,7 +13,7 @@ import mathFuncs.loadArl as loadARL
 
 gamePath = os.getcwd() #Path to game directory
 maxFps = 60 #Target FPS for the game to aim for
-buildId = "id181.1" #Build Identifier
+buildId = "id-arc" #Build Identifier
 
 #Level loading routine for now :)
 loadFrom = 'lvl1.arl'
@@ -145,7 +145,7 @@ triggerPhone = False
 phoneCounter = 0
 nextCall = 0
 waitCounter = 2
-dt = 1 #id158.1 delta time physics calculation
+dt = 1
 phoneX = 0
 phoneY = 0
 currentText = []
@@ -225,7 +225,7 @@ while running:
             buttonLayer.blit(t,(i.x,i.y))
             if i.isOver((mousex,mousey)) and pg.mouse.get_pressed()[0]:
                 state == i.name
-                resumeTimer = 15
+                resumeTimer = 20
 
     #MAIN GAME LOOP
     if state == 'game' or state == 'resuming' or state == 'pause' or state == 'phonecall':
@@ -322,7 +322,7 @@ while running:
             dy += random.uniform(-0.04,0.04)
             spawnedKunai.append(kunai.Kunai(pl.xpos,pl.ypos-60,dx*30,dy*30,gamePath,level,levelSub,width))
             kuAni = 0
-            pl.energy -= 12 #id155.1 moved from player to main
+            pl.energy -= 15 #id155.1 moved from player to main
         if pl.kunaiAni == 1: #id181.1 seperated this to fix animation
             kunais -= 1
         
@@ -444,13 +444,13 @@ while running:
         redrawHearts=False
 
         #BuildId
-        tsurface = smallfont.render(str(buildId),True,(230,230,230))
-        HUD.blit(pg.transform.rotate(tsurface,-55),(15-hexFade,HEI-62+(hexFade/12)))
+        tsurface = smallfont.render("Upwards " + str(buildId),True,(230,230,230))
+        screen.blit(tsurface,(10,10))
 
         #Rightside HUD
         if not pl.onGround or pl.energy < 95: 
-            energyStopCounter = counter + 45
-        if counter > energyStopCounter:    
+            energyStopCounter = counter + 60
+        if counter > energyStopCounter:
             energyFade *= 1.15
             if energyFade > 300:
                 energyFade = 300
