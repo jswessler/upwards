@@ -2,8 +2,6 @@ import pygame as pg
 import sensor, os, math
 import mathFuncs.distFuncs as distF
 
-buildId = 'id157.2'
-
 #Kunai (throwing knife)
 class Kunai(pg.sprite.Sprite):
     def __init__(self,xpos,ypos,xv,yv,gamePath,level,levelSub,width):
@@ -11,12 +9,11 @@ class Kunai(pg.sprite.Sprite):
         self.ypos = ypos
         self.xv = xv
         self.yv = yv
-        self.gravity = 0.1
+        self.gravity = 0.1125
         self.stuck = False
         self.timeAlive = 0
         self.timeHoming = 0
-        self.baseImage = pg.image.load(os.path.join(gamePath,"Images", "UI", "pixelkunai.png"))
-        self.baseImage = pg.transform.scale2x(self.baseImage)
+        self.baseImage = pg.transform.scale2x(pg.image.load(os.path.join(gamePath,"Images", "UI", "pixelkunai.png")))
         self.kunaiSens = sensor.Sensor(self,level,levelSub,width)
         self.direction = 0
     def update(self,plx,ply):
@@ -34,7 +31,6 @@ class Kunai(pg.sprite.Sprite):
         else:
             #else fly through the air with low gravity
             self.stuck = False
-            self.gravity = 0.1
         if distF.getDist(self.xpos,self.ypos,plx,ply)<300 and self.timeAlive>60:
             if self.timeHoming < 90:
                 self.timeHoming += 1

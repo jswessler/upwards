@@ -1,5 +1,8 @@
 Release Log:
 
+id-arc2
+- New text functions
+
 id-arc
 - Changes to HUD sliding
 

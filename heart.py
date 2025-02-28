@@ -1,7 +1,5 @@
 import pygame as pg
 
-buildId = 'id152.2'
-
 #Deals damage to hearts in order
 def dealDmg(amt,health):
     for hp in reversed(health):
@@ -17,7 +15,6 @@ def healDmg(amt,health):
     for hp in health:
         amt-=hp.heal(amt)
     return health
-
 
 class Heart(pg.sprite.Sprite):
     def __init__(self,typ,amt):

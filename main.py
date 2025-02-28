@@ -7,13 +7,14 @@ import heart,sensor,kunai,player,button,particle
 import mathFuncs.distFuncs as distF
 import mathFuncs.imgFuncs as imgF
 import mathFuncs.loadArl as loadARL
+import drawFuncs.text as DT
 
 # import heartrate
 # heartrate.trace(browser=True)
 
 gamePath = os.getcwd() #Path to game directory
 maxFps = 60 #Target FPS for the game to aim for
-buildId = "id-arc" #Build Identifier
+buildId = "id-arc2" #Build Identifier
 
 #Level loading routine for now :)
 loadFrom = 'lvl1.arl'
@@ -201,11 +202,9 @@ while running:
     elif state=='phonecall' and tboxWidth>width:
         moveCamera(mousex,mousey)
         if line>-1:
-            tsurface = textfont.render(str(textName),True,(230,230,230))
-            text.blit(tsurface,(70,HEI-385))
+            DT.drawText(textName,70,HEI-385,text,32)
         for i in range(0,len(currentText)):
-            tsurface = textfont.render(str(currentText[i]),True,(230,230,230))
-            text.blit(tsurface,(70,HEI-270+(i*50)))
+            DT.drawText(currentText[i],70,HEI-270+(i*50),text,32)
     elif state=='resuming':
         moveCamera(mousex,mousey)
         pg.draw.line(buttonLayer,(230,40,40),(pl.xpos-camerax,pl.ypos-cameray-40),(pl.xpos-camerax+(20*pl.xv),pl.ypos-cameray-40+(20*pl.yv)),4)
@@ -355,10 +354,8 @@ while running:
                     except:
                         pass
                 if ke[pg.K_t]:
-                    tsurface = smallfont.render(str(bl),True,(255,0,0) if bl!=0 else (180,180,180))
-                    screen.blit(tsurface, ((x-camerax)*gameScale,(y-cameray)*gameScale,32*gameScale,32*gameScale))
-                    tsurface = smallfont.render(str(blSub),True,(255,0,0) if blSub!=0 else (180,180,180))
-                    screen.blit(tsurface, ((x-camerax)*gameScale,(y+12-cameray)*gameScale,32*gameScale,32*gameScale))
+                    DT.drawText(bl,(x-camerax)*gameScale,(y-cameray)*gameScale,screen,12,(255,0,0) if bl!=0 else (180,180,180))
+                    DT.drawText(blSub,(x-camerax)*gameScale,(y+12-cameray)*gameScale,screen,12,(255,0,0) if blSub!=0 else (180,180,180))
 
                         
         #Draw Phone
@@ -444,8 +441,7 @@ while running:
         redrawHearts=False
 
         #BuildId
-        tsurface = smallfont.render("Upwards " + str(buildId),True,(230,230,230))
-        screen.blit(tsurface,(10,10))
+        DT.drawText("Upwards " + str(buildId),10,10,screen,24)
 
         #Rightside HUD
         if not pl.onGround or pl.energy < 95: 
@@ -487,16 +483,11 @@ while running:
         
         #Debug Stats
         if ke[pg.K_r]:
-            tsurface = smallfont.render(str(pl.xv),True,(230,230,230))
-            HUD.blit(tsurface,(10,HEI-250))
-            tsurface = smallfont.render(str(pl.yv),True,(230,230,230))
-            HUD.blit(tsurface,(10,HEI-265))
-            tsurface = smallfont.render(str(pl.maxSpd),True,(230,230,230))
-            HUD.blit(tsurface,(10,HEI-280))
-            tsurface = smallfont.render(str(round(avgFps,2)) + " fps",True,(230,230,230))
-            HUD.blit(tsurface,(10,HEI-295))
-            tsurface = smallfont.render(str(round(1000/f,2)) + " fps",True,(230,230,230))
-            HUD.blit(tsurface,(10,HEI-310))
+            DT.drawText(round(pl.xv,2),10,60,screen,18)
+            DT.drawText(round(pl.yv,2),10,75,screen,18)
+            DT.drawText(round(pl.maxSpd,2),10,90,screen,18)
+            DT.drawText(round(avgFps,2),10,105,screen,18)
+            DT.drawText(round(1000/f,2),10,120,screen,18)
 
             #Draw a center box (only on R press as of id versions)
             if (4*HEI/10)<mousey<(6*HEI/10) and (4*WID/10)<mousex<(6*WID/10):

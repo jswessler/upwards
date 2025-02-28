@@ -6,9 +6,6 @@ import sensor
 import mathFuncs.imgFuncs as imgF
 
 
-
-buildId = 'id181.1'
-
 class Player(pg.sprite.Sprite):
     def __init__(self,spawn,width,gamePath,level,levelSub):
         self.ypos = 32*(math.floor(spawn/width))
