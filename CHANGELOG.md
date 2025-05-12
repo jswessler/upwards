@@ -1,5 +1,8 @@
 Release Log:
 
+up-l.01-1
+- Initial port to Love2d
+
 id-arc2
 - New text functions
 

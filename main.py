@@ -425,7 +425,7 @@ while running:
         #Draw Hearts
         c=0
         for hp in health:
-            if redrawHearts:
+            if redrawHearts:    
                 hexReapper = True
                 try:
                     hp.setImg(pg.image.load(os.path.join(gamePath,"Images","Hearts",hp.fileExt + str(hp.amt) + ".png")))
@@ -456,6 +456,7 @@ while running:
             energyFade = 0.1
 
         #Draw HUD Kunais
+        print(kuAni,kunais)
         for i in range(0,kunais):
             kunaiImg.set_alpha(255)
             if i == 0:
